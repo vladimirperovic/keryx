@@ -1,0 +1,13 @@
+node_modules
+dist
+npm-debug.log*
+*.log
+logs
+.env
+.env.local
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+generated_schemas/
+*.shortcut

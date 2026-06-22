@@ -1,0 +1,2300 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keryx — AI Gateway za vaš biznis</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="description" content="Keryx je open-source, self-hosted API most između web platformi i AI asistenata. MCP server, OpenAPI šema i Apple Siri Shortcuts generator.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       KERYX — "HERALD" DESIGN SYSTEM
+       Keryx (Κῆρυξ) = grčki glasnik. Signal-room estetika:
+       dubok crni ink, topla amber beacon akcentna, editorial serif,
+       monospace data layer. Svaki element je namerni signal.
+       ============================================================ */
+
+    :root {
+      /* Surfaces */
+      --ink:        #0a0a0c;
+      --ink-2:      #0f0f12;
+      --ink-3:      #141418;
+      --ink-card:   #16161b;
+      --ink-line:   rgba(244, 239, 230, 0.08);
+      --ink-line-2: rgba(244, 239, 230, 0.14);
+
+      /* Foreground */
+      --bone:       #f4efe6;      /* warm parchment white */
+      --bone-2:     #d8d2c4;
+      --bone-3:     #9b958a;
+      --bone-4:     #5c574f;
+
+      /* Brand: amber beacon */
+      --beacon:     #e8b07d;
+      --beacon-2:   #d4a574;
+      --beacon-glow:rgba(232, 176, 125, 0.22);
+
+      /* Signal states */
+      --signal:     #8ab4a1;      /* sage green for OK */
+      --azure:      #7fa7d9;      /* soft blue for info */
+      --ember:      #d97757;      /* warm red for warn */
+
+      /* Typography */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-sans:    'Geist', -apple-system, system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+      /* Motion */
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Layout */
+      --maxw: 1240px;
+      --gut: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--bone-2);
+      background: var(--ink);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    ::selection { background: var(--beacon); color: var(--ink); }
+
+    /* Film grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Ambient amber glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 60vh;
+      background: radial-gradient(ellipse at center, var(--beacon-glow), transparent 60%);
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* ===== CUSTOM CURSOR ===== */
+    .cursor-dot, .cursor-ring {
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 10000;
+      border-radius: 50%;
+      mix-blend-mode: difference;
+    }
+    .cursor-dot {
+      width: 6px; height: 6px;
+      background: var(--bone);
+      transition: transform 0.15s var(--ease), opacity 0.2s;
+    }
+    .cursor-ring {
+      width: 38px; height: 38px;
+      border: 1px solid rgba(244, 239, 230, 0.4);
+      transition: transform 0.25s var(--ease), width 0.25s var(--ease), height 0.25s var(--ease), border-color 0.25s, background 0.25s;
+    }
+    .cursor-ring.hovering {
+      width: 64px; height: 64px;
+      border-color: var(--beacon);
+      background: rgba(232, 176, 125, 0.08);
+    }
+    @media (max-width: 900px), (hover: none) {
+      body { cursor: auto; }
+      .cursor-dot, .cursor-ring { display: none; }
+    }
+
+    /* ===== SCROLL PROGRESS ===== */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--beacon-2), var(--beacon));
+      z-index: 9999;
+      width: 0%;
+      box-shadow: 0 0 12px var(--beacon-glow);
+      transition: width 0.1s linear;
+    }
+
+    /* ===== NAVBAR ===== */
+    .nav {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 2.5rem);
+      max-width: var(--maxw);
+      z-index: 900;
+      transition: top 0.4s var(--ease);
+    }
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      padding: 0.625rem 0.625rem 0.625rem 1.5rem;
+      background: rgba(15, 15, 18, 0.72);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      border: 1px solid var(--ink-line);
+      border-radius: 100px;
+      transition: background 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+    }
+    .nav.scrolled .nav-bar {
+      background: rgba(10, 10, 12, 0.88);
+      border-color: var(--ink-line-2);
+      box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--bone);
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .nav-logo-mark {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--beacon), var(--beacon-2));
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      box-shadow: 0 0 16px var(--beacon-glow);
+      position: relative;
+    }
+    .nav-logo-mark::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 10px;
+      border: 1px solid var(--beacon);
+      opacity: 0.3;
+      animation: markPulse 3s var(--ease) infinite;
+    }
+    @keyframes markPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0; transform: scale(1.15); }
+    }
+    .nav-logo-version {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--bone-3);
+      background: rgba(244,239,230,0.05);
+      padding: 0.15rem 0.5rem;
+      border-radius: 100px;
+      border: 1px solid var(--ink-line);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--bone-3);
+      padding: 0.5rem 0.875rem;
+      border-radius: 100px;
+      transition: color 0.25s var(--ease), background 0.25s var(--ease);
+      position: relative;
+      text-decoration: none;
+    }
+    .nav-links a:hover { color: var(--bone); background: rgba(244,239,230,0.05); }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bone) !important;
+      color: var(--ink) !important;
+      font-weight: 500 !important;
+      font-size: 0.82rem !important;
+      padding: 0.625rem 1.25rem !important;
+      border-radius: 100px !important;
+      transition: all 0.3s var(--ease) !important;
+    }
+    .nav-cta:hover {
+      background: var(--beacon) !important;
+      color: var(--ink) !important;
+      box-shadow: 0 0 24px var(--beacon-glow);
+    }
+    .nav-lang {
+      font-family: var(--font-mono) !important;
+      font-size: 0.7rem !important;
+      padding: 0.4rem 0.6rem !important;
+      border: 1px solid var(--ink-line-2) !important;
+      border-radius: 6px !important;
+      background: transparent !important;
+      color: var(--bone-3) !important;
+    }
+    .nav-lang:hover { color: var(--beacon) !important; border-color: var(--beacon) !important; }
+
+    .nav-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--ink-line);
+      border-radius: 100px;
+      width: 42px; height: 42px;
+      cursor: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .nav-toggle span { width: 16px; height: 1.5px; background: var(--bone); transition: all 0.3s var(--ease); }
+    .nav-toggle.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* ===== LAYOUT PRIMITIVES ===== */
+    .section {
+      position: relative;
+      padding: clamp(5rem, 11vw, 9rem) var(--gut);
+      z-index: 1;
+    }
+    .section-inner { max-width: var(--maxw); margin: 0 auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--beacon);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin-bottom: 1.75rem;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 28px; height: 1px;
+      background: var(--beacon);
+    }
+
+    .display {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+      line-height: 1.02;
+      letter-spacing: -0.025em;
+      color: var(--bone);
+    }
+    .display em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--beacon);
+    }
+    .display .row { display: block; }
+
+    .lede {
+      font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--bone-2);
+      max-width: 56ch;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.95rem 1.75rem;
+      border-radius: 100px;
+      border: none;
+      cursor: none;
+      transition: all 0.35s var(--ease);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary {
+      background: var(--bone);
+      color: var(--ink);
+    }
+    .btn-primary:hover {
+      background: var(--beacon);
+      box-shadow: 0 8px 30px var(--beacon-glow);
+    }
+    .btn-primary .btn-icon { transition: transform 0.35s var(--ease); }
+    .btn-primary:hover .btn-icon { transform: translateY(3px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--bone);
+      border: 1px solid var(--ink-line-2);
+    }
+    .btn-secondary:hover {
+      border-color: var(--beacon);
+      color: var(--beacon);
+      background: rgba(232,176,125,0.05);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      padding: clamp(8rem, 16vh, 11rem) var(--gut) 5rem;
+      z-index: 1;
+    }
+    .hero-inner { max-width: var(--maxw); margin: 0 auto; }
+
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--bone-3);
+      background: rgba(244,239,230,0.03);
+      border: 1px solid var(--ink-line);
+      padding: 0.5rem 1rem 0.5rem 0.875rem;
+      border-radius: 100px;
+      margin-bottom: 2.5rem;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--signal);
+      box-shadow: 0 0 0 0 rgba(138,180,161,0.6);
+      animation: statusPulse 2.4s infinite;
+    }
+    @keyframes statusPulse {
+      0% { box-shadow: 0 0 0 0 rgba(138,180,161,0.5); }
+      70% { box-shadow: 0 0 0 9px rgba(138,180,161,0); }
+      100% { box-shadow: 0 0 0 0 rgba(138,180,161,0); }
+    }
+    .hero-status .sep { color: var(--bone-4); }
+    .hero-status .tag { color: var(--beacon); }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(2.8rem, 7.5vw, 6rem);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      color: var(--bone);
+      margin-bottom: 1.75rem;
+    }
+    .hero-title em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--beacon);
+      display: inline-block;
+      position: relative;
+    }
+    .hero-title em::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: 0.08em;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0.4;
+    }
+
+    .hero-desc {
+      font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--bone-2);
+      max-width: 44rem;
+      margin-bottom: 2.5rem;
+    }
+    .hero-desc em { font-style: italic; color: var(--bone); }
+
+    .hero-actions {
+      display: flex;
+      gap: 0.875rem;
+      flex-wrap: wrap;
+      margin-bottom: 4rem;
+    }
+
+    /* ===== SIGNAL BRIDGE (flow diagram, elevated) ===== */
+    .bridge {
+      position: relative;
+      margin-top: 3rem;
+      padding: 2.5rem 1.5rem 2rem;
+      border: 1px solid var(--ink-line);
+      border-radius: 24px;
+      background:
+        radial-gradient(ellipse at top, rgba(232,176,125,0.06), transparent 70%),
+        var(--ink-2);
+      overflow: hidden;
+    }
+    .bridge::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0.4;
+    }
+    .bridge-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(244,239,230,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(244,239,230,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+    }
+    .bridge-label {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .bridge-flow {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    .bridge-node {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .bridge-node-icon {
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line-2);
+      transition: all 0.4s var(--ease);
+    }
+    .bridge-node:hover .bridge-node-icon {
+      border-color: var(--beacon);
+      box-shadow: 0 0 24px var(--beacon-glow);
+      transform: translateY(-3px);
+    }
+    .bridge-node-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--bone-3);
+    }
+    .bridge-node-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--bone);
+      font-weight: 500;
+    }
+    .bridge-node.featured .bridge-node-icon {
+      background: linear-gradient(135deg, var(--beacon), var(--beacon-2));
+      border-color: var(--beacon);
+      color: var(--ink);
+      box-shadow: 0 0 32px var(--beacon-glow);
+    }
+    .bridge-wire {
+      position: relative;
+      flex: 1;
+      max-width: 120px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bridge-wire svg { width: 100%; height: 2px; overflow: visible; }
+    .bridge-wire .wire-line {
+      stroke: var(--ink-line-2);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+    }
+    .bridge-pulse {
+      fill: var(--beacon);
+      filter: drop-shadow(0 0 4px var(--beacon));
+    }
+    @media (max-width: 720px) {
+      .bridge-flow { flex-direction: column; gap: 0.5rem; }
+      .bridge-wire { width: 2px; height: 36px; max-width: none; }
+      .bridge-wire svg { width: 2px; height: 100%; }
+    }
+
+    /* ===== MARQUEE ===== */
+    .marquee {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--ink-line);
+      border-bottom: 1px solid var(--ink-line);
+      background: var(--ink-2);
+      padding: 1.5rem 0;
+    }
+    .marquee-track {
+      display: flex;
+      gap: 4rem;
+      width: max-content;
+      animation: marquee 38s linear infinite;
+    }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    .marquee-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.4rem;
+      color: var(--bone-3);
+      white-space: nowrap;
+    }
+    .marquee-item .platform {
+      color: var(--bone);
+      font-style: normal;
+      font-family: var(--font-sans);
+      font-weight: 500;
+    }
+    .marquee-item .meta {
+      font-family: var(--font-mono);
+      font-style: normal;
+      font-size: 0.7rem;
+      color: var(--beacon);
+      padding-left: 0.5rem;
+      border-left: 1px solid var(--ink-line-2);
+    }
+
+    /* ===== SECTION HEADER ===== */
+    .section-head { margin-bottom: 3.5rem; max-width: 50rem; }
+
+    /* ===== FEATURE BENTO ===== */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+    }
+    .bento-card {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      overflow: hidden;
+      transition: all 0.4s var(--ease);
+    }
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), var(--beacon-glow), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+      pointer-events: none;
+    }
+    .bento-card:hover { border-color: var(--ink-line-2); transform: translateY(-3px); }
+    .bento-card:hover::before { opacity: 0.5; }
+    .bento-card > * { position: relative; z-index: 1; }
+
+    .bento-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      background: rgba(232,176,125,0.08);
+      border: 1px solid rgba(232,176,125,0.18);
+    }
+    .bento-icon.var-azure { background: rgba(127,167,217,0.08); border-color: rgba(127,167,217,0.18); }
+    .bento-icon.var-signal { background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.18); }
+    .bento-icon.var-bone { background: rgba(244,239,230,0.06); border-color: rgba(244,239,230,0.12); }
+
+    .bento-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.3rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+      letter-spacing: -0.01em;
+    }
+    .bento-desc {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .bento-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .bento-num {
+      position: absolute;
+      top: 1.5rem; right: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--bone-4);
+      letter-spacing: 0.1em;
+    }
+
+    .bento-span-3 { grid-column: span 3; }
+    .bento-span-2 { grid-column: span 2; }
+    .bento-span-4 { grid-column: span 4; }
+    .bento-span-6 { grid-column: span 6; }
+
+    @media (max-width: 900px) {
+      .bento { grid-template-columns: repeat(2, 1fr); }
+      .bento-span-3, .bento-span-2, .bento-span-4, .bento-span-6 { grid-column: span 2; }
+    }
+    @media (max-width: 560px) {
+      .bento { grid-template-columns: 1fr; }
+      .bento-span-3, .bento-span-2, .bento-span-4, .bento-span-6 { grid-column: span 1; }
+    }
+
+    /* ===== ARCHITECTURE ===== */
+    .arch-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 920px) { .arch-layout { grid-template-columns: 1fr; } }
+
+    .timeline {
+      position: relative;
+      padding-left: 2.25rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px; top: 8px; bottom: 8px;
+      width: 1px;
+      background: linear-gradient(180deg, var(--beacon), var(--ink-line-2));
+    }
+    .tl-item {
+      position: relative;
+      padding-bottom: 2.25rem;
+    }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -2.25rem; top: 6px;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--beacon);
+      box-shadow: 0 0 0 4px var(--ink), 0 0 16px var(--beacon-glow);
+    }
+    .tl-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--beacon);
+      margin-bottom: 0.4rem;
+    }
+    .tl-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.15rem;
+      color: var(--bone);
+      margin-bottom: 0.4rem;
+    }
+    .tl-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .tl-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .panel {
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 1.75rem;
+      position: relative;
+    }
+    .panel + .panel { margin-top: 1rem; }
+    .panel-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .panel-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--ink-line);
+    }
+    .panel-value {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--bone);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .panel-text { font-size: 0.85rem; color: var(--bone-3); line-height: 1.6; }
+
+    /* Code block */
+    .codeblock {
+      background: var(--ink);
+      border: 1px solid var(--ink-line);
+      border-radius: 16px;
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: var(--bone-2);
+      position: relative;
+      overflow-x: auto;
+    }
+    .codeblock-label {
+      position: absolute;
+      top: 0.875rem; right: 1rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+    }
+    .codeblock .kw { color: var(--beacon); }
+    .codeblock .str { color: var(--signal); }
+    .codeblock .fn { color: var(--azure); }
+    .codeblock .com { color: var(--bone-4); font-style: italic; }
+    .codeblock .dim { color: var(--bone-4); }
+
+    /* File tree */
+    .tree {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.85;
+      color: var(--bone-3);
+    }
+    .tree .hl { color: var(--beacon); }
+    .tree .note { color: var(--bone-4); }
+
+    /* ===== ENDPOINTS ===== */
+    .endpoints {
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--ink-card);
+    }
+    .endpoints table { width: 100%; border-collapse: collapse; }
+    .endpoints thead { background: var(--ink-2); }
+    .endpoints th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      padding: 1.1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--ink-line);
+    }
+    .endpoints td {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--ink-line);
+      font-size: 0.9rem;
+      color: var(--bone-2);
+      vertical-align: middle;
+    }
+    .endpoints tbody tr { transition: background 0.25s var(--ease); }
+    .endpoints tbody tr:hover { background: rgba(232,176,125,0.03); }
+    .endpoints tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid;
+      display: inline-block;
+    }
+    .badge.get { color: var(--signal); background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.25); }
+    .badge.post { color: var(--azure); background: rgba(127,167,217,0.08); border-color: rgba(127,167,217,0.25); }
+    .badge.public { color: var(--signal); background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.25); }
+    .badge.protected { color: var(--ember); background: rgba(217,119,87,0.08); border-color: rgba(217,119,87,0.25); }
+
+    .path {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--bone);
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.4s var(--ease);
+    }
+    .step:hover { border-color: var(--beacon); transform: translateY(-3px); }
+    .step-num {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 3rem;
+      line-height: 1;
+      color: var(--beacon);
+      opacity: 0.5;
+      margin-bottom: 1rem;
+    }
+    .step-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+    }
+    .step-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .step-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .step-desc strong { color: var(--bone); font-weight: 500; }
+    .step-desc em { font-style: italic; color: var(--bone); }
+
+    .result-banner {
+      margin-top: 1rem;
+      background: linear-gradient(135deg, rgba(138,180,161,0.08), rgba(232,176,125,0.05));
+      border: 1px solid rgba(138,180,161,0.25);
+      border-radius: 20px;
+      padding: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    @media (max-width: 720px) { .result-banner { flex-direction: column; text-align: center; } }
+    .result-mic {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: rgba(138,180,161,0.1);
+      border: 1px solid rgba(138,180,161,0.3);
+      display: grid;
+      place-items: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      box-shadow: 0 0 24px rgba(138,180,161,0.15);
+    }
+    .result-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.3rem;
+      color: var(--signal);
+      margin-bottom: 0.5rem;
+    }
+    .result-desc { font-size: 0.95rem; line-height: 1.6; color: var(--bone-2); }
+    .result-desc em { font-style: italic; color: var(--bone); }
+
+    /* ===== USERS ===== */
+    .users {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 980px) { .users { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .users { grid-template-columns: 1fr; } }
+    .user-card {
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.4s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+    .user-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+    }
+    .user-card:hover { border-color: var(--ink-line-2); transform: translateY(-3px); }
+    .user-card:hover::before { opacity: 0.5; }
+    .user-emoji {
+      font-size: 2rem;
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+    .user-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+    }
+    .user-desc { font-size: 0.88rem; line-height: 1.6; color: var(--bone-3); }
+
+    /* ===== PRICING ===== */
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) { .pricing { grid-template-columns: 1fr; } }
+    .price-card {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 24px;
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s var(--ease);
+    }
+    .price-card:hover { border-color: var(--ink-line-2); }
+    .price-card.featured {
+      border-color: var(--beacon);
+      background: linear-gradient(180deg, rgba(232,176,125,0.06), var(--ink-card));
+      box-shadow: 0 0 40px rgba(232,176,125,0.08);
+    }
+    .price-flag {
+      position: absolute;
+      top: -0.75rem; left: 50%;
+      transform: translateX(-50%);
+      background: var(--beacon);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .price-name {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.4rem;
+      color: var(--bone);
+      margin-bottom: 0.25rem;
+    }
+    .price-name em {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.1rem;
+      color: var(--beacon);
+      margin-left: 0.4rem;
+    }
+    .price-amount {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 3.2rem;
+      color: var(--bone);
+      line-height: 1;
+      margin: 1.25rem 0 0.25rem;
+      letter-spacing: -0.03em;
+    }
+    .price-amount .unit {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: var(--bone-4);
+      font-family: var(--font-sans);
+    }
+    .price-tagline {
+      font-size: 0.88rem;
+      color: var(--bone-3);
+      line-height: 1.55;
+      margin-bottom: 1.75rem;
+      min-height: 2.6em;
+    }
+    .price-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      margin-bottom: 2rem;
+      flex: 1;
+    }
+    .price-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      font-size: 0.88rem;
+      color: var(--bone-2);
+      line-height: 1.5;
+    }
+    .price-features li.dim { color: var(--bone-4); }
+    .price-features li strong { font-weight: 500; color: var(--bone); }
+    .price-features .check { color: var(--signal); flex-shrink: 0; margin-top: 1px; }
+    .price-features .info { color: var(--azure); flex-shrink: 0; margin-top: 1px; }
+    .price-card .btn { width: 100%; justify-content: center; }
+
+    .pledge {
+      margin-top: 1.5rem;
+      background:
+        radial-gradient(ellipse at top left, rgba(127,167,217,0.08), transparent 60%),
+        var(--ink-card);
+      border: 1px solid rgba(127,167,217,0.2);
+      border-radius: 20px;
+      padding: 2.25rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    @media (max-width: 720px) { .pledge { flex-direction: column; } }
+    .pledge-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .pledge-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--azure);
+      margin-bottom: 0.625rem;
+    }
+    .pledge-text { font-size: 0.92rem; line-height: 1.65; color: var(--bone-2); max-width: 60ch; }
+    .pledge-text strong { color: var(--bone); font-weight: 500; }
+    .pledge-text em { font-style: italic; color: var(--beacon); }
+
+    /* ===== FAQ ===== */
+    .faq { display: flex; flex-direction: column; }
+    .faq-item { border-bottom: 1px solid var(--ink-line); }
+    .faq-item:first-child { border-top: 1px solid var(--ink-line); }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: none;
+      padding: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      color: var(--bone);
+      transition: color 0.25s var(--ease);
+      font-family: inherit;
+    }
+    .faq-q:hover { color: var(--beacon); }
+    .faq-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--bone-4);
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+      width: 2rem;
+      transition: color 0.25s var(--ease);
+    }
+    .faq-item.open .faq-num, .faq-q:hover .faq-num { color: var(--beacon); }
+    .faq-text {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.1rem;
+      flex: 1;
+      letter-spacing: -0.01em;
+      transition: color 0.25s var(--ease);
+    }
+    .faq-q:hover .faq-text { color: var(--beacon); }
+    .faq-toggle {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--ink-line-2);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: all 0.35s var(--ease);
+      color: var(--bone-3);
+      position: relative;
+    }
+    .faq-toggle::before, .faq-toggle::after {
+      content: '';
+      position: absolute;
+      background: currentColor;
+      transition: transform 0.35s var(--ease);
+    }
+    .faq-toggle::before { width: 10px; height: 1.5px; }
+    .faq-toggle::after { width: 1.5px; height: 10px; }
+    .faq-item.open .faq-toggle {
+      background: var(--beacon);
+      border-color: var(--beacon);
+      color: var(--ink);
+    }
+    .faq-item.open .faq-toggle::after { transform: rotate(90deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s var(--ease);
+    }
+    .faq-item.open .faq-a { max-height: 600px; }
+    .faq-a-inner {
+      padding: 0 0 1.5rem 3.25rem;
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: var(--bone-3);
+      max-width: 56rem;
+    }
+    .faq-a-inner code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .faq-a-inner em { font-style: italic; color: var(--bone-2); }
+    .faq-a-inner strong { color: var(--bone); font-weight: 500; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      position: relative;
+      background: var(--ink-2);
+      border-top: 1px solid var(--ink-line);
+      padding: 5rem var(--gut) 2.5rem;
+      z-index: 1;
+    }
+    .footer-inner { max-width: var(--maxw); margin: 0 auto; }
+    .footer-mark {
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-style: italic;
+      font-size: clamp(3rem, 9vw, 7rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--bone);
+      margin-bottom: 3rem;
+      background: linear-gradient(180deg, var(--bone), var(--bone-4));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .footer-mark em { font-style: italic; color: var(--beacon); -webkit-text-fill-color: var(--beacon); }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 3rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--ink-line);
+    }
+    @media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+    .footer-heading {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      margin-bottom: 1.25rem;
+    }
+    .footer-desc { font-size: 0.9rem; line-height: 1.65; color: var(--bone-3); max-width: 28rem; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
+    .footer-links a {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--bone-3);
+      transition: color 0.25s var(--ease);
+      text-decoration: none;
+    }
+    .footer-links a:hover { color: var(--beacon); }
+    .footer-bottom {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--bone-4);
+    }
+
+    /* ===== REVEAL ANIMATION ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.08s; }
+    .reveal-d2 { transition-delay: 0.16s; }
+    .reveal-d3 { transition-delay: 0.24s; }
+    .reveal-d4 { transition-delay: 0.32s; }
+    .reveal-d5 { transition-delay: 0.40s; }
+
+    /* ===== RESPONSIVE NAV ===== */
+    @media (max-width: 1000px) {
+      .nav-links { display: none; }
+      .nav-toggle { display: flex; }
+      .nav-links.mobile-open {
+        display: flex;
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0; right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+        padding: 1rem;
+        background: rgba(15,15,18,0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--ink-line-2);
+        border-radius: 20px;
+      }
+      .nav-links.mobile-open a { padding: 0.875rem 1rem; }
+    }
+
+    @media (max-width: 720px) {
+      .endpoints { overflow-x: auto; }
+      .endpoints table { min-width: 560px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Custom cursor -->
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- Scroll progress -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- ===== NAV ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav-bar">
+      <a href="#top" class="nav-logo" data-cursor>
+        <span class="nav-logo-mark">K</span>
+        Keryx
+        <span class="nav-logo-version">v0.1.0</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features" data-cursor>Funkcije</a></li>
+        <li><a href="#architecture" data-cursor>Arhitektura</a></li>
+        <li><a href="#endpoints" data-cursor>API</a></li>
+        <li><a href="#how-it-works" data-cursor>Kako radi</a></li>
+        <li><a href="#users" data-cursor>Korisnici</a></li>
+        <li><a href="#pricing" data-cursor>Cenovnik</a></li>
+        <li><a href="#faq" data-cursor>FAQ</a></li>
+        <li><a href="https://github.com" class="nav-cta" data-cursor>GitHub <span>↗</span></a></li>
+        <li><a href="index-en.html" class="nav-lang" data-cursor>EN</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Meni">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="hero-status reveal">
+        <span class="status-dot"></span>
+        Open-Source <span class="sep">·</span> Self-Hosted <span class="sep">·</span> <span class="tag">MIT Licenca</span>
+      </div>
+
+      <h1 class="hero-title reveal reveal-d1">
+        Dajte glas svom<br>
+        biznisu uz <em>Siri</em>
+      </h1>
+
+      <p class="hero-desc reveal reveal-d2">
+        Instalirajte Keryx na vaš sajt i omogućite korisnicima neverovatno iskustvo. Pitajte Siri: <em>"Koja su mi dugovanja?"</em> ili <em>"Koliko imam nepročitanih vesti?"</em> — a Keryx će im trenutno, putem apsolutno sigurnog protokola, odgovoriti podacima sa vašeg sajta.
+      </p>
+
+      <div class="hero-actions reveal reveal-d3">
+        <a href="#features" class="btn btn-primary" data-cursor data-magnetic>
+          Istraži funkcije
+          <span class="btn-icon">↓</span>
+        </a>
+        <a href="#architecture" class="btn btn-secondary" data-cursor data-magnetic>Kako radi</a>
+      </div>
+
+      <!-- SIGNAL BRIDGE -->
+      <div class="bridge reveal reveal-d4">
+        <div class="bridge-grid"></div>
+        <div class="bridge-label">Signal Bridge · Glas → Keryx → Vaš sajt</div>
+        <div class="bridge-flow">
+          <div class="bridge-node" data-cursor>
+            <div class="bridge-node-icon">🎤</div>
+            <div class="bridge-node-name">Siri</div>
+            <div class="bridge-node-label">Glas</div>
+          </div>
+
+          <div class="bridge-wire">
+            <svg preserveAspectRatio="none" viewBox="0 0 120 2">
+              <line class="wire-line" x1="0" y1="1" x2="120" y2="1"/>
+              <circle class="bridge-pulse" r="3" cy="1">
+                <animate attributeName="cx" values="0;120" dur="2.4s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0;1;1;0" dur="2.4s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+
+          <div class="bridge-node featured" data-cursor>
+            <div class="bridge-node-icon">☁️</div>
+            <div class="bridge-node-name">Keryx</div>
+            <div class="bridge-node-label">Gateway</div>
+          </div>
+
+          <div class="bridge-wire">
+            <svg preserveAspectRatio="none" viewBox="0 0 120 2">
+              <line class="wire-line" x1="0" y1="1" x2="120" y2="1"/>
+              <circle class="bridge-pulse" r="3" cy="1">
+                <animate attributeName="cx" values="0;120" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0;1;1;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+
+          <div class="bridge-node" data-cursor>
+            <div class="bridge-node-icon">🌐</div>
+            <div class="bridge-node-name">Vaš sajt</div>
+            <div class="bridge-node-label">API</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MARQUEE ===== -->
+  <div class="marquee">
+    <div class="marquee-track" id="marqueeTrack">
+      <span class="marquee-item"><span class="platform">ChatGPT</span><span class="meta">OpenAI Actions</span></span>
+      <span class="marquee-item"><span class="platform">Siri</span><span class="meta">Apple Shortcuts</span></span>
+      <span class="marquee-item"><span class="platform">Gemini</span><span class="meta">Function Calling</span></span>
+      <span class="marquee-item"><span class="platform">Claude</span><span class="meta">Model Context Protocol</span></span>
+      <span class="marquee-item"><span class="platform">ChatGPT</span><span class="meta">OpenAI Actions</span></span>
+      <span class="marquee-item"><span class="platform">Siri</span><span class="meta">Apple Shortcuts</span></span>
+      <span class="marquee-item"><span class="platform">Gemini</span><span class="meta">Function Calling</span></span>
+      <span class="marquee-item"><span class="platform">Claude</span><span class="meta">Model Context Protocol</span></span>
+    </div>
+  </div>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="section" id="features">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Ključne funkcionalnosti</div>
+        <h2 class="display">
+          <span class="row">Sve što vam treba,</span>
+          <span class="row"><em>na jednom mestu</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Keryx objedinjuje dva modula — Next-Gen za LLM integraciju i Legacy za Apple Siri Shortcuts — u jedinstven, modularan sistem sa deljenim registrom alata.
+        </p>
+      </div>
+
+      <div class="bento">
+        <div class="bento-card bento-span-3 reveal">
+          <span class="bento-num">01</span>
+          <div class="bento-icon var-azure">🤖</div>
+          <h3 class="bento-title">MCP Server</h3>
+          <p class="bento-desc">
+            Model Context Protocol endpoint za direktnu komunikaciju sa Claude, ChatGPT i drugim LLM agentima. Streamable HTTP transport u stateless režimu — idealan za load balancing.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-3 reveal reveal-d1">
+          <span class="bento-num">02</span>
+          <div class="bento-icon">📋</div>
+          <h3 class="bento-title">OpenAPI 3.1 Šema</h3>
+          <p class="bento-desc">
+            Automatski generisana OpenAPI šema iz Zod definicija. LLM agenti je čitaju da otkriju dostupne funkcije i kako da komuniciraju sa vašom platformom.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal">
+          <span class="bento-num">03</span>
+          <div class="bento-icon var-bone">📱</div>
+          <h3 class="bento-title">Siri Shortcuts</h3>
+          <p class="bento-desc">
+            Generisanje Apple <code>.shortcut</code> fajlova iz URL-a i tokena. iOS korisnici preuzimaju prečicu koja izvršava HTTP zahtev sa Authorization header-om jednim tapom.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal reveal-d1">
+          <span class="bento-num">04</span>
+          <div class="bento-icon var-signal">🔐</div>
+          <h3 class="bento-title">Bezbednost</h3>
+          <p class="bento-desc">
+            Timing-safe autentifikacija, CORS politika, rate limiting (100 req/min), validacija ulaza Zod šemom, i ScPL injection zaštita.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal reveal-d2">
+          <span class="bento-num">05</span>
+          <div class="bento-icon">🐳</div>
+          <h3 class="bento-title">Docker-Ready</h3>
+          <p class="bento-desc">
+            Multi-stage Dockerfile, non-root korisnik, healthcheck endpoint. Pokreće se jednom komandom: <code>docker-compose up</code>. Optimizovano za WSL2 i Proxmox.
+          </p>
+        </div>
+      </div>
+
+      <div class="bento-card bento-span-6 reveal reveal-d1" style="margin-top: 1rem;">
+        <span class="bento-num">06</span>
+        <div class="bento-icon var-azure">⚙️</div>
+        <h3 class="bento-title">REST API</h3>
+        <p class="bento-desc">
+          Svaki registrovani alat automatski dobija REST endpoint na <code>/api/tools/&lt;ime&gt;</code>. Standardni JSON request/response sa validacijom i detaljnim greškama.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Arhitektura</div>
+        <h2 class="display">
+          <span class="row">Jedan registar,</span>
+          <span class="row"><em>tri površine</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Srce Keryx-a je deljeni registar alata. Svaki alat se definiše JEDNOM kao Zod šema + handler, a iz njega se automatski generišu sve tri API površine.
+        </p>
+      </div>
+
+      <div class="arch-layout">
+        <div class="reveal">
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-tag">Sloj 1 — Definicija</div>
+              <div class="tl-title">Registar alata</div>
+              <div class="tl-desc"><code>src/core/registry.ts</code> — centralno skladište. Svaki alat ima ime, Zod šemu ulaza, opis i handler funkciju. Moduli registruju alate pri inicijalizaciji.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Sloj 2 — Generisanje</div>
+              <div class="tl-title">Automatsko izlaganje</div>
+              <div class="tl-desc">Iz registra se generišu: OpenAPI 3.1 šema (<code>GET /openapi.json</code>), MCP tool lista (<code>POST /mcp</code>), i REST rute (<code>POST /api/tools/*</code>).</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Sloj 3 — Moduli</div>
+              <div class="tl-title">Next-Gen + Legacy</div>
+              <div class="tl-desc">Svaki modul živi u svom direktorijumu i registruje alate nezavisno. Dodavanje novog alata = nova Zod šema + handler, bez diranja core koda.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Sloj 4 — Transport</div>
+              <div class="tl-title">Express HTTP server</div>
+              <div class="tl-desc">Express 4 sa CORS, rate limit, timing-safe auth middleware. Graceful shutdown (SIGTERM/SIGINT) za Docker/Kubernetes.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-d2" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="panel">
+            <div class="panel-label">Princip</div>
+            <div class="panel-value">Jedan izvor istine</div>
+            <div class="panel-text">OpenAPI šema i MCP server se grade iz istih definicija — nikada ne mogu da se raziđu.</div>
+          </div>
+
+          <div class="codeblock">
+            <span class="codeblock-label">registry.ts</span>
+<span class="com">// Definiši alat jednom...</span>
+<span class="kw">const</span> myTool = {
+  name: <span class="str">"create_shortcut"</span>,
+  input: z.object({
+    url: z.string().<span class="fn">url</span>(),
+    token: z.string().<span class="fn">min</span>(1),
+  }),
+  handler: <span class="kw">async</span> (input) => {
+    <span class="com">// ...generisi shortcut</span>
+  }
+};
+
+<span class="com">// ...registruj jednom...</span>
+registry.<span class="fn">register</span>(myTool);
+
+<span class="com">// ...pojavi se SVUDA:</span>
+<span class="dim">// ✓ GET  /openapi.json</span>
+<span class="dim">// ✓ POST /mcp</span>
+<span class="dim">// ✓ POST /api/tools/create_shortcut</span>
+          </div>
+
+          <div class="panel">
+            <div class="panel-label">Struktura fajlova</div>
+            <div class="tree">
+src/<br>
+├── config/<span class="hl">env.ts</span><br>
+├── core/<br>
+│&nbsp;&nbsp; ├── <span class="hl">registry.ts</span> <span class="note">← izvor istine</span><br>
+│&nbsp;&nbsp; └── <span class="hl">openapi.ts</span><br>
+├── modules/<br>
+│&nbsp;&nbsp; ├── nextgen/ <span class="note">(MCP, echo, status)</span><br>
+│&nbsp;&nbsp; └── legacy/ <span class="note">(Siri Shortcuts)</span><br>
+├── <span class="hl">server.ts</span><br>
+└── <span class="hl">index.ts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ENDPOINTS ===== -->
+  <section class="section" id="endpoints">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">API Endpointi</div>
+        <h2 class="display">
+          <span class="row">Kompletna</span>
+          <span class="row"><em>API mapa</em></span>
+        </h2>
+      </div>
+
+      <div class="endpoints reveal reveal-d1">
+        <table>
+          <thead>
+            <tr>
+              <th>Metoda</th>
+              <th>Putanja</th>
+              <th>Auth</th>
+              <th>Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/healthz</span></td>
+              <td><span class="badge public">Javno</span></td>
+              <td>Health check za Docker / load balancer</td>
+            </tr>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/openapi.json</span></td>
+              <td><span class="badge public">Javno</span></td>
+              <td>OpenAPI 3.1 šema za Claude / ChatGPT</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/mcp</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>MCP Streamable HTTP (stateless)</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/gateway_status</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Status gateway-a i lista alata</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/echo</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Echo poruke (test konekcije)</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/create_shortcut</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Generiši Apple Siri prečicu</td>
+            </tr>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/api/shortcuts/:id</span></td>
+              <td><span class="badge public">Javno</span></td>
+              <td>Download .shortcut fajla (capability URL)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="section" id="how-it-works">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Kako to izgleda u praksi</div>
+        <h2 class="display">
+          <span class="row">Od klika na sajtu</span>
+          <span class="row"><em>do iPhone prečice</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Kako ovo zapravo izgleda vašim korisnicima? Ako niste programer, evo kako ceo proces teče — glatko i bez instaliranja posebnih aplikacija.
+        </p>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-num">01</div>
+          <h3 class="step-title">Klik na vašem sajtu</h3>
+          <p class="step-desc">
+            Korisnik je ulogovan u vašu web aplikaciju. Vi postavite obično dugme <strong>"Dodaj na moj iPhone"</strong>. Kada klikne, vaša aplikacija u pozadini pošalje Keryx-u instrukciju i token korisnika.
+          </p>
+        </div>
+        <div class="step reveal reveal-d1">
+          <div class="step-num">02</div>
+          <h3 class="step-title">Keryx pravi magiju</h3>
+          <p class="step-desc">
+            U deliću sekunde, Keryx pakuje te instrukcije i generiše nativni Apple fajl za prečice (<code>.shortcut</code>). Keryx zatim vraća vašem sajtu bezbedan link za preuzimanje tog fajla.
+          </p>
+        </div>
+        <div class="step reveal reveal-d2">
+          <div class="step-num">03</div>
+          <h3 class="step-title">Dodavanje na telefon</h3>
+          <p class="step-desc">
+            Korisnikov telefon automatski preuzima taj fajl. Otvara se ugrađena <strong>Shortcuts (Prečice)</strong> aplikacija na iPhone-u. Korisnik samo potvrdi sa "Add Shortcut" i to je to.
+          </p>
+        </div>
+      </div>
+
+      <div class="result-banner reveal reveal-d3">
+        <div class="result-mic">🎤</div>
+        <div>
+          <div class="result-title">Završni rezultat: Kontrola glasom</div>
+          <p class="result-desc">
+            Sada vaš korisnik može da kaže: <em>"Hej Siri, uradi to i to"</em>. Njegov telefon će tajno u pozadini pozvati vaš sajt, koristeći njegov sigurni token. Korisnik nije morao ništa da podešava, ništa da instalira iz App Store-a, niti da unosi šifre!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== USERS ===== -->
+  <section class="section" id="users">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Ko koristi Keryx</div>
+        <h2 class="display">
+          <span class="row">Napravljen za</span>
+          <span class="row"><em>razne potrebe</em></span>
+        </h2>
+      </div>
+
+      <div class="users">
+        <div class="user-card reveal">
+          <span class="user-emoji">🧑‍💻</span>
+          <h3 class="user-title">Web developeri</h3>
+          <p class="user-desc">Koji žele da izlože funkcionalnost svoje platforme AI agentima bez pisanja MCP servera od nule. Registruj alat — i Claude ga odmah koristi.</p>
+        </div>
+        <div class="user-card reveal reveal-d1">
+          <span class="user-emoji">🏢</span>
+          <h3 class="user-title">Firme sa internim alatima</h3>
+          <p class="user-desc">Self-hosted: podaci ne napuštaju vašu infrastrukturu. Idealno za interne API-je koji treba da budu dostupni glasovnim asistentima i LLM-ovima.</p>
+        </div>
+        <div class="user-card reveal reveal-d2">
+          <span class="user-emoji">📱</span>
+          <h3 class="user-title">iOS korisnici i automatizatori</h3>
+          <p class="user-desc">Generišite Siri prečice koje pozivaju vaš API jednim tapom. Bearer token se ugrađuje u prečicu — ne treba kucati nikakve podatke.</p>
+        </div>
+        <div class="user-card reveal reveal-d3">
+          <span class="user-emoji">🏠</span>
+          <h3 class="user-title">Homelab entuzijasti</h3>
+          <p class="user-desc">Docker kontejner od 50MB, healthcheck ugrađen, radi na Proxmox/WSL2. Pokrenite na svom NAS-u ili mini serveru i povežite sa AI alatima.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section class="section" id="pricing">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Cenovnik</div>
+        <h2 class="display">
+          <span class="row">Fleksibilni planovi za</span>
+          <span class="row"><em>svaki biznis</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Izgrađen na super-brzoj tehnologiji, Keryx nam omogućava da vam ponudimo vrhunsku uslugu uz minimalne troškove. Počnite besplatno i platite tek kada vaš biznis poraste.
+        </p>
+      </div>
+
+      <div class="pricing">
+        <!-- FREE -->
+        <div class="price-card reveal">
+          <div class="price-name">Free <em>The Hook</em></div>
+          <div class="price-amount">$0<span class="unit"> / mesečno</span></div>
+          <p class="price-tagline">Savršeno za startape i male biznise da testiraju integraciju.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>Sve funkcije Keryx-a</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Do 1.000 AI interakcija</strong> mesečno</span></li>
+            <li><span class="check">✓</span> <span>Integracija sa sajtom (MCP + Siri)</span></li>
+            <li class="dim"><span class="info">ℹ</span> <span>Diskretan "Powered by Keryx.ai" logo</span></li>
+          </ul>
+          <a href="#" class="btn btn-secondary" data-cursor data-magnetic>Započni besplatno</a>
+        </div>
+
+        <!-- PRO -->
+        <div class="price-card featured reveal reveal-d1">
+          <span class="price-flag">Najpopularnije</span>
+          <div class="price-name">Pro</div>
+          <div class="price-amount">$29<span class="unit"> / mesečno</span></div>
+          <p class="price-tagline">Za biznise u razvoju kojima je potreban neograničen pristup i analitika.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>Neograničen broj interakcija</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Uklonjen Keryx.ai logo</strong> (White-label)</span></li>
+            <li><span class="check">✓</span> <span><strong>Detaljna analitika</strong> (šta korisnici pitaju)</span></li>
+            <li><span class="check">✓</span> <span>Napredne CRM i Stripe integracije</span></li>
+            <li><span class="check">✓</span> <span>Povećana brzina odziva (Priority Queue)</span></li>
+          </ul>
+          <a href="#" class="btn btn-primary" data-cursor data-magnetic>Pređi na Pro</a>
+        </div>
+
+        <!-- ENTERPRISE -->
+        <div class="price-card reveal reveal-d2">
+          <div class="price-name">Enterprise</div>
+          <div class="price-amount">Custom</div>
+          <p class="price-tagline">Za velike e-commerce sajtove i sisteme sa stotinama hiljada poseta.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>Sve iz Pro paketa</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Dedicated infrastruktura</strong></span></li>
+            <li><span class="check">✓</span> <span>99.99% SLA garancija dostupnosti</span></li>
+            <li><span class="check">✓</span> <span>Maksimalna bezbednost i enkripcija podataka</span></li>
+            <li><span class="check">✓</span> <span>24/7 Premium podrška</span></li>
+          </ul>
+          <a href="#" class="btn btn-secondary" data-cursor data-magnetic>Kontaktiraj prodaju</a>
+        </div>
+      </div>
+
+      <!-- OPEN SOURCE PLEDGE -->
+      <div class="pledge reveal reveal-d2">
+        <div class="pledge-icon">🔓</div>
+        <div>
+          <h3 class="pledge-title">Zašto je Keryx Open-Source?</h3>
+          <p class="pledge-text">
+            Igramo na kartu <strong>transparentnosti i sigurnosti</strong>. Pošto sistem barata vašim API tokenima, naš kod je uvek 100% javan na GitHub-u kako biste bili sigurni da nema skrivenih radnji. Mi ne prodajemo tajni kod — mi prodajemo <em>"Keryx kao servis"</em> onima koji žele bezbrižno, potpuno održavano i gotovo rešenje koje radi 24/7.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="section" id="faq">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Najčešća pitanja</div>
+        <h2 class="display">
+          <span class="row">Pitanja i</span>
+          <span class="row"><em>odgovori</em></span>
+        </h2>
+      </div>
+
+      <div class="faq reveal reveal-d1">
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">01</span>
+            <span class="faq-text">Šta je Keryx i čemu služi?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx je open-source, self-hosted API gateway koji služi kao most između vaše web platforme i AI asistenata (Claude, ChatGPT, Siri). Umesto da za svakog AI agenta pišete posebnu integraciju, registrujete alat jednom u Keryx — i on se automatski pojavljuje kao MCP tool, OpenAPI operacija i REST endpoint.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">02</span>
+            <span class="faq-text">Da li moram da koristim cloud servis?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Ne. Keryx je potpuno self-hosted — pokrećete ga na svom serveru, NAS-u, ili čak Raspberry Pi-ju. Vaši podaci nikada ne prolaze kroz treće strane. Sve što vam treba je Docker ili Node.js ≥ 20.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">03</span>
+            <span class="faq-text">Šta je MCP (Model Context Protocol)?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            MCP je otvoreni protokol koji omogućava LLM agentima (kao Claude) da otkrivaju i pozivaju spoljne alate. Keryx implementira MCP server preko Streamable HTTP transporta u stateless režimu — agent šalje JSON-RPC zahtev na <code>/mcp</code> i dobija listu alata ili izvršava operaciju.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">04</span>
+            <span class="faq-text">Kako funkcionišu Siri prečice?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Šaljete POST zahtev sa URL-om i Bearer tokenom na <code>/api/tools/create_shortcut</code>. Keryx generiše Apple <code>.shortcut</code> fajl (binary property list) koji sadrži ugrađeni HTTP zahtev. Dobijate download link — iOS korisnik ga otvori, doda prečicu, i jednim tapom (ili glasovnom komandom) poziva vaš API.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">05</span>
+            <span class="faq-text">Da li je bezbedno ugrađivati token u prečicu?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Token koji se ugrađuje u prečicu je token <em>vašeg ciljnog API-ja</em>, ne Keryx gateway token. On je vidljiv svakome ko preuzme <code>.shortcut</code> fajl — to je po dizajnu, jer prečica mora da radi autonomno. Preporučujemo korišćenje tokena sa ograničenim dozvolama i kratkim rokom trajanja. Download link ističe nakon 10 minuta i sadrži 128-bitni nepogodljiv ID.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">06</span>
+            <span class="faq-text">Kako da dodam svoj vlastiti alat?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Kreirajte fajl u <code>src/modules/</code>, definišite Zod šemu za ulaz, napišite handler funkciju, i pozovite <code>registry.register(mojAlat)</code>. Keryx automatski generiše OpenAPI šemu, MCP tool i REST rutu. Ne trebate dirati core kod — pogledajte <code>src/modules/nextgen/tools.ts</code> kao primer.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">07</span>
+            <span class="faq-text">Koliko alata Keryx može da podrži?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Nema tehničkog ograničenja. Registar je in-memory Map koji se popuni pri pokretanju. Sa 100 alata, OpenAPI šema je svega nekoliko KB. MCP lista se generiše iz istog registra. Bottleneck bi bio samo memorija za shortcut store (konfiguriše se kroz <code>KERYX_SHORTCUT_STORE_MAX</code>).
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">08</span>
+            <span class="faq-text">Kako pokrećem Keryx u produkciji?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Najjednostavniji način: <code>cp .env.example .env</code>, podesite <code>KERYX_API_TOKEN</code> i <code>PUBLIC_BASE_URL</code>, pa pokrenite <code>docker-compose up -d</code>. Kontejner koristi Node.js 20 Alpine, radi kao non-root korisnik, sa ugrađenim healthcheck-om.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">09</span>
+            <span class="faq-text">Da li Keryx podržava WebSocket ili SSE?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            MCP transport koristi Streamable HTTP koji internalno može koristiti SSE za streaming odgovora. Međutim, Keryx radi u stateless režimu — svaki zahtev je nezavisan, bez dugotrajnih konekcija. Za real-time funkcije, alat može integrisati WebSocket u svom handler-u.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">10</span>
+            <span class="faq-text">Koji TypeScript/Node.js verzija je potrebna?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Node.js ≥ 20 (ESM, <code>"type": "module"</code>). TypeScript 5.7+ u strict modu. Za razvoj se koristi <code>tsx</code> (watch mode), a za produkciju se kompajlira u JavaScript sa <code>npm run build</code>.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">11</span>
+            <span class="faq-text">Šta je „deljeni registar" i zašto je bitan?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Deljeni registar je centralno mesto gde se svaki alat definiše tačno jednom. Iz njega se generišu OpenAPI šema, MCP alati i REST rute. To znači da je nemoguće da se ove tri površine raziđu — ako dodate parametar u Zod šemu, on se automatski pojavljuje svuda. To eliminše celu kategoriju bagova.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">12</span>
+            <span class="faq-text">Šta se dešava ako istekne download link za prečicu?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Download link ističe nakon <code>KERYX_SHORTCUT_TTL_MS</code> (podrazumevano 10 minuta). Nakon toga, <code>GET /api/shortcuts/:id</code> vraća 404 sa porukom „Prečica nije pronađena ili je istekla." Korisnik može zatražiti novu prečicu. Ovo sprečava nakupljanje fajlova u memoriji.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">13</span>
+            <span class="faq-text">Mogu li koristiti Keryx bez autentifikacije?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Da, za lokalni razvoj. Ako ostavite <code>KERYX_API_TOKEN</code> praznim u <code>.env</code>, autentifikacija je isključena. U produkciji, obavezno postavite token — svi zaštićeni endpointi zahtevaju <code>Authorization: Bearer &lt;token&gt;</code> header.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">14</span>
+            <span class="faq-text">Da li Keryx radi na Windows / WSL2?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Da. Keryx je dizajniran za WSL2 i Proxmox okruženja. Docker kontejner koristi Alpine Linux i nema platformski-specifičnih zavisnosti. Može se pokrenuti i direktno kroz Node.js na Windows-u, ali Docker pristup je preporužen.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">15</span>
+            <span class="faq-text">Kako da doprinesem projektu?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx je MIT licenciran i otvoren za doprinose. Fork-ujte repozitorijum, dodajte modul ili alat prateći obrazac iz <code>src/modules/nextgen/tools.ts</code>, pokrenite <code>npm run typecheck</code> da proverite tipove, i otvorite Pull Request. Pogledajte <code>docs/internal/TODO.md</code> za planirane funkcije.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">16</span>
+            <span class="faq-text">Da li Keryx usporava moju aplikaciju?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Apsolutno ne. Keryx radi na vašem serveru i procesira zahteve u deliću sekunde. Zato što je stateless i napisan u Node.js-u sa asinhronim tokovima, može da izdrži ogroman broj zahteva istovremeno bez blokiranja vašeg glavnog sajta.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">17</span>
+            <span class="faq-text">Da li mi treba Apple Developer nalog ili App Store aplikacija?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Ne! To je i najveća prednost Keryx-a. Prečice (Shortcuts) su ugrađene u svaki iPhone. Vaš korisnik može da komunicira sa vašim sajtom koristeći samo telefon i glas, a da vi nikada niste morali da napravite i objavite aplikaciju na App Store-u.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">18</span>
+            <span class="faq-text">Mogu li korisnici da vide moj tajni API token?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Vaš glavni Keryx API token je sakriven na vašem serveru. Ali token <strong>vašeg korisnika</strong> (koji on koristi da bi dokazao ko je kada Siri pošalje zahtev) je ugrađen u prečicu na njegovom telefonu. To je njegov lični token, tako da on njime kontroliše samo svoj nalog.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">19</span>
+            <span class="faq-text">Koliko košta korišćenje Keryx-a?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx je 100% besplatan i open-source projekat pod MIT licencom. Nema mesečnih pretplata, nema ograničenja funkcija, a možete ga menjati i koristiti u komercijalnim projektima.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">20</span>
+            <span class="faq-text">Da li radi na Android uređajima?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Next-Gen modul (MCP i OpenAPI) radi svuda — na svakom LLM asistentu (Claude, ChatGPT). Ali Legacy modul je specifično dizajniran za generisanje <code>.shortcut</code> fajlova koji rade isključivo na iOS, iPadOS i macOS uređajima.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">21</span>
+            <span class="faq-text">Šta mi je potrebno na mom serveru da bih ga pokrenuo?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Treba vam samo server na kom možete da pokrenete Docker (što je većina modernih servera). Alternativno, možete ga pokrenuti i bez Dockera ako imate instaliran Node.js verzije 20 ili novije.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">22</span>
+            <span class="faq-text">Zašto je Keryx bolji od npr. Zapier-a ili Make-a?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Sistemi poput Zapier-a naplaćuju po broju obavljenih zadataka, čuvaju podatke vaših korisnika na svojim serverima i zahtevaju podešavanje od strane korisnika. Keryx živi na vašem serveru, potpuno je besplatan neograničeno, i prečice se generišu automatski za svakog korisnika.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">23</span>
+            <span class="faq-text">Da li Keryx čuva podatke o mojim korisnicima u bazi?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Ne. Keryx uopšte nema bazu podataka (stateless je). Generisane prečice se čuvaju samo trenutno u radnoj memoriji (RAM) dok ih korisnik ne preuzme (maksimalno 10 minuta), a zatim se nepovratno brišu. Vaši podaci ostaju vaši.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">24</span>
+            <span class="faq-text">Koliko mi je programiranja potrebno za integraciju?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Minimalno. Naš "shared registry" sistem vas vodi kroz kreiranje alata. Dovoljno je da znate malo TypeScript/JavaScript-a, definišete koja polja vaša operacija traži koristeći Zod biblioteku, i Keryx sam obavlja svu tešku arhitekturu izlaganja.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq data-cursor>
+            <span class="faq-num">25</span>
+            <span class="faq-text">Šta ako Apple ili OpenAI izmene svoje protokole?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            To je razlog zašto Keryx i postoji kao posrednik (middleware)! Ako dođe do promena, naš open-source tim će ažurirati kod Keryx-a. Vi samo ažurirate Keryx instalaciju na svom serveru, dok kod vašeg glavnog sajta ostaje apsolutno netaknut.
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-mark reveal">Keryx<em>.</em></div>
+      <div class="footer-grid">
+        <div class="reveal">
+          <div class="footer-heading">O projektu</div>
+          <p class="footer-desc">
+            Keryx AI Gateway — open-source most između web platformi i AI asistenata. Self-hosted, modularan, bezbedan.
+          </p>
+        </div>
+        <div class="reveal reveal-d1">
+          <div class="footer-heading">Dokumentacija</div>
+          <ul class="footer-links">
+            <li><a href="#features" data-cursor>Funkcije</a></li>
+            <li><a href="#architecture" data-cursor>Arhitektura</a></li>
+            <li><a href="#endpoints" data-cursor>API Mapa</a></li>
+            <li><a href="#faq" data-cursor>FAQ</a></li>
+          </ul>
+        </div>
+        <div class="reveal reveal-d2">
+          <div class="footer-heading">Resursi</div>
+          <ul class="footer-links">
+            <li><a href="#" data-cursor>README.md</a></li>
+            <li><a href="#" data-cursor>DESIGN_SYSTEM.md</a></li>
+            <li><a href="#" data-cursor>.env.example</a></li>
+            <li><a href="#" data-cursor>Changelog</a></li>
+          </ul>
+        </div>
+        <div class="reveal reveal-d3">
+          <div class="footer-heading">Stack</div>
+          <ul class="footer-links">
+            <li><a href="#" data-cursor>Node.js / TypeScript</a></li>
+            <li><a href="#" data-cursor>Express 4</a></li>
+            <li><a href="#" data-cursor>MCP SDK</a></li>
+            <li><a href="#" data-cursor>Zod</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Keryx AI Gateway · MIT Licenca</span>
+        <span>v0.1.0</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== SCROLL PROGRESS =====
+    const progress = document.getElementById('scrollProgress');
+    const nav = document.getElementById('nav');
+    const onScroll = () => {
+      const h = document.documentElement;
+      const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+      progress.style.width = scrolled + '%';
+      nav.classList.toggle('scrolled', h.scrollTop > 40);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // ===== REVEAL ON SCROLL =====
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ===== FAQ ACCORDION =====
+    document.querySelectorAll('[data-faq]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const wasOpen = item.classList.contains('open');
+        item.classList.toggle('open', !wasOpen);
+      });
+    });
+
+    // ===== SMOOTH SCROLL (offset for fixed nav) =====
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const id = this.getAttribute('href');
+        if (id === '#' || id.length < 2) return;
+        const target = document.querySelector(id);
+        if (target) {
+          e.preventDefault();
+          const y = target.getBoundingClientRect().top + window.scrollY - 90;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+          document.getElementById('navLinks').classList.remove('mobile-open');
+          document.getElementById('navToggle').classList.remove('open');
+        }
+      });
+    });
+
+    // ===== MOBILE NAV =====
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('mobile-open');
+      navToggle.classList.toggle('open');
+    });
+
+    // ===== CUSTOM CURSOR =====
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let rx = mx, ry = my;
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (finePointer) {
+      window.addEventListener('mousemove', (e) => {
+        mx = e.clientX; my = e.clientY;
+        dot.style.transform = `translate(${mx - 3}px, ${my - 3}px)`;
+      });
+      const tick = () => {
+        rx += (mx - rx) * 0.18;
+        ry += (my - ry) * 0.18;
+        ring.style.transform = `translate(${rx - 19}px, ${ry - 19}px)`;
+        requestAnimationFrame(tick);
+      };
+      tick();
+      document.querySelectorAll('[data-cursor], a, button').forEach(el => {
+        el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
+        el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
+      });
+    }
+
+    // ===== MAGNETIC BUTTONS =====
+    if (finePointer) {
+      document.querySelectorAll('[data-magnetic]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          const r = el.getBoundingClientRect();
+          const x = e.clientX - r.left - r.width / 2;
+          const y = e.clientY - r.top - r.height / 2;
+          el.style.transform = `translate(${x * 0.18}px, ${y * 0.3}px)`;
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = '';
+        });
+      });
+    }
+
+    // ===== BENTO CARD SPOTLIGHT =====
+    if (finePointer) {
+      document.querySelectorAll('.bento-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+          card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>

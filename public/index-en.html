@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keryx — AI Gateway for your business</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="description" content="Keryx is an open-source, self-hosted API bridge between web platforms and AI assistants. MCP server, OpenAPI schema, and Apple Siri Shortcuts generator.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       KERYX — "HERALD" DESIGN SYSTEM
+       Keryx (Κῆρυξ) = the Greek herald. Signal-room aesthetic:
+       deep black ink, warm amber beacon accent, editorial serif,
+       monospace data layer. Every element is an intentional signal.
+       ============================================================ */
+
+    :root {
+      /* Surfaces */
+      --ink:        #0a0a0c;
+      --ink-2:      #0f0f12;
+      --ink-3:      #141418;
+      --ink-card:   #16161b;
+      --ink-line:   rgba(244, 239, 230, 0.08);
+      --ink-line-2: rgba(244, 239, 230, 0.14);
+
+      /* Foreground */
+      --bone:       #f4efe6;      /* warm parchment white */
+      --bone-2:     #d8d2c4;
+      --bone-3:     #9b958a;
+      --bone-4:     #5c574f;
+
+      /* Brand: amber beacon */
+      --beacon:     #e8b07d;
+      --beacon-2:   #d4a574;
+      --beacon-glow:rgba(232, 176, 125, 0.22);
+
+      /* Signal states */
+      --signal:     #8ab4a1;      /* sage green for OK */
+      --azure:      #7fa7d9;      /* soft blue for info */
+      --ember:      #d97757;      /* warm red for warn */
+
+      /* Typography */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-sans:    'Geist', -apple-system, system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+      /* Motion */
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Layout */
+      --maxw: 1240px;
+      --gut: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+    body {
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--bone-2);
+      background: var(--ink);
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--beacon); color: var(--ink); }
+
+    /* Film grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Ambient amber glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 60vh;
+      background: radial-gradient(ellipse at center, var(--beacon-glow), transparent 60%);
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* ===== SCROLL PROGRESS ===== */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--beacon-2), var(--beacon));
+      z-index: 9999;
+      width: 0%;
+      box-shadow: 0 0 12px var(--beacon-glow);
+      transition: width 0.1s linear;
+    }
+
+    /* ===== NAVBAR ===== */
+    .nav {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 2.5rem);
+      max-width: var(--maxw);
+      z-index: 900;
+      transition: top 0.4s var(--ease);
+    }
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      padding: 0.625rem 0.625rem 0.625rem 1.5rem;
+      background: rgba(15, 15, 18, 0.72);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      border: 1px solid var(--ink-line);
+      border-radius: 100px;
+      transition: background 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
+    }
+    .nav.scrolled .nav-bar {
+      background: rgba(10, 10, 12, 0.88);
+      border-color: var(--ink-line-2);
+      box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--bone);
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .nav-logo-mark {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--beacon), var(--beacon-2));
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      box-shadow: 0 0 16px var(--beacon-glow);
+      position: relative;
+    }
+    .nav-logo-mark::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 10px;
+      border: 1px solid var(--beacon);
+      opacity: 0.3;
+      animation: markPulse 3s var(--ease) infinite;
+    }
+    @keyframes markPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0; transform: scale(1.15); }
+    }
+    .nav-logo-version {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--bone-3);
+      background: rgba(244,239,230,0.05);
+      padding: 0.15rem 0.5rem;
+      border-radius: 100px;
+      border: 1px solid var(--ink-line);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--bone-3);
+      padding: 0.5rem 0.875rem;
+      border-radius: 100px;
+      transition: color 0.25s var(--ease), background 0.25s var(--ease);
+      position: relative;
+      text-decoration: none;
+    }
+    .nav-links a:hover { color: var(--bone); background: rgba(244,239,230,0.05); }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bone) !important;
+      color: var(--ink) !important;
+      font-weight: 500 !important;
+      font-size: 0.82rem !important;
+      padding: 0.625rem 1.25rem !important;
+      border-radius: 100px !important;
+      transition: all 0.3s var(--ease) !important;
+    }
+    .nav-cta:hover {
+      background: var(--beacon) !important;
+      color: var(--ink) !important;
+      box-shadow: 0 0 24px var(--beacon-glow);
+    }
+    .nav-lang {
+      font-family: var(--font-mono) !important;
+      font-size: 0.7rem !important;
+      padding: 0.4rem 0.6rem !important;
+      border: 1px solid var(--ink-line-2) !important;
+      border-radius: 6px !important;
+      background: transparent !important;
+      color: var(--bone-3) !important;
+    }
+    .nav-lang:hover { color: var(--beacon) !important; border-color: var(--beacon) !important; }
+
+    .nav-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--ink-line);
+      border-radius: 100px;
+      width: 42px; height: 42px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .nav-toggle span { width: 16px; height: 1.5px; background: var(--bone); transition: all 0.3s var(--ease); }
+    .nav-toggle.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* ===== LAYOUT PRIMITIVES ===== */
+    .section {
+      position: relative;
+      padding: clamp(5rem, 11vw, 9rem) var(--gut);
+      z-index: 1;
+    }
+    .section-inner { max-width: var(--maxw); margin: 0 auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--beacon);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin-bottom: 1.75rem;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 28px; height: 1px;
+      background: var(--beacon);
+    }
+
+    .display {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+      line-height: 1.02;
+      letter-spacing: -0.025em;
+      color: var(--bone);
+    }
+    .display em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--beacon);
+    }
+    .display .row { display: block; }
+
+    .lede {
+      font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--bone-2);
+      max-width: 56ch;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.95rem 1.75rem;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.35s var(--ease);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary {
+      background: var(--bone);
+      color: var(--ink);
+    }
+    .btn-primary:hover {
+      background: var(--beacon);
+      box-shadow: 0 8px 30px var(--beacon-glow);
+    }
+    .btn-primary .btn-icon { transition: transform 0.35s var(--ease); }
+    .btn-primary:hover .btn-icon { transform: translateY(3px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--bone);
+      border: 1px solid var(--ink-line-2);
+    }
+    .btn-secondary:hover {
+      border-color: var(--beacon);
+      color: var(--beacon);
+      background: rgba(232,176,125,0.05);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      padding: clamp(8rem, 16vh, 11rem) var(--gut) 5rem;
+      z-index: 1;
+    }
+    .hero-inner { max-width: var(--maxw); margin: 0 auto; }
+
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--bone-3);
+      background: rgba(244,239,230,0.03);
+      border: 1px solid var(--ink-line);
+      padding: 0.5rem 1rem 0.5rem 0.875rem;
+      border-radius: 100px;
+      margin-bottom: 2.5rem;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--signal);
+      box-shadow: 0 0 0 0 rgba(138,180,161,0.6);
+      animation: statusPulse 2.4s infinite;
+    }
+    @keyframes statusPulse {
+      0% { box-shadow: 0 0 0 0 rgba(138,180,161,0.5); }
+      70% { box-shadow: 0 0 0 9px rgba(138,180,161,0); }
+      100% { box-shadow: 0 0 0 0 rgba(138,180,161,0); }
+    }
+    .hero-status .sep { color: var(--bone-4); }
+    .hero-status .tag { color: var(--beacon); }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(2.8rem, 7.5vw, 6rem);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      color: var(--bone);
+      margin-bottom: 1.75rem;
+    }
+    .hero-title em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--beacon);
+      display: inline-block;
+      position: relative;
+    }
+    .hero-title em::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: 0.08em;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0.4;
+    }
+
+    .hero-desc {
+      font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--bone-2);
+      max-width: 44rem;
+      margin-bottom: 2.5rem;
+    }
+    .hero-desc em { font-style: italic; color: var(--bone); }
+
+    .hero-actions {
+      display: flex;
+      gap: 0.875rem;
+      flex-wrap: wrap;
+      margin-bottom: 4rem;
+    }
+
+    /* ===== SIGNAL BRIDGE (flow diagram, elevated) ===== */
+    .bridge {
+      position: relative;
+      margin-top: 3rem;
+      padding: 2.5rem 1.5rem 2rem;
+      border: 1px solid var(--ink-line);
+      border-radius: 24px;
+      background:
+        radial-gradient(ellipse at top, rgba(232,176,125,0.06), transparent 70%),
+        var(--ink-2);
+      overflow: hidden;
+    }
+    .bridge::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0.4;
+    }
+    .bridge-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(244,239,230,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(244,239,230,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+    }
+    .bridge-label {
+      position: relative;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .bridge-flow {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    .bridge-node {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .bridge-node-icon {
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line-2);
+      transition: all 0.4s var(--ease);
+    }
+    .bridge-node:hover .bridge-node-icon {
+      border-color: var(--beacon);
+      box-shadow: 0 0 24px var(--beacon-glow);
+      transform: translateY(-3px);
+    }
+    .bridge-node-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--bone-3);
+    }
+    .bridge-node-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--bone);
+      font-weight: 500;
+    }
+    .bridge-node.featured .bridge-node-icon {
+      background: linear-gradient(135deg, var(--beacon), var(--beacon-2));
+      border-color: var(--beacon);
+      color: var(--ink);
+      box-shadow: 0 0 32px var(--beacon-glow);
+    }
+    .bridge-wire {
+      position: relative;
+      flex: 1;
+      max-width: 120px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bridge-wire svg { width: 100%; height: 2px; overflow: visible; }
+    .bridge-wire .wire-line {
+      stroke: var(--ink-line-2);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+    }
+    .bridge-pulse {
+      fill: var(--beacon);
+      filter: drop-shadow(0 0 4px var(--beacon));
+    }
+    @media (max-width: 720px) {
+      .bridge-flow { flex-direction: column; gap: 0.5rem; }
+      .bridge-wire { width: 2px; height: 36px; max-width: none; }
+      .bridge-wire svg { width: 2px; height: 100%; }
+    }
+
+    /* ===== MARQUEE ===== */
+    .marquee {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--ink-line);
+      border-bottom: 1px solid var(--ink-line);
+      background: var(--ink-2);
+      padding: 1.5rem 0;
+    }
+    .marquee-track {
+      display: flex;
+      gap: 4rem;
+      width: max-content;
+      animation: marquee 38s linear infinite;
+    }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    .marquee-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.4rem;
+      color: var(--bone-3);
+      white-space: nowrap;
+    }
+    .marquee-item .platform {
+      color: var(--bone);
+      font-style: normal;
+      font-family: var(--font-sans);
+      font-weight: 500;
+    }
+    .marquee-item .meta {
+      font-family: var(--font-mono);
+      font-style: normal;
+      font-size: 0.7rem;
+      color: var(--beacon);
+      padding-left: 0.5rem;
+      border-left: 1px solid var(--ink-line-2);
+    }
+
+    /* ===== SECTION HEADER ===== */
+    .section-head { margin-bottom: 3.5rem; max-width: 50rem; }
+
+    /* ===== FEATURE BENTO ===== */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+    }
+    .bento-card {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      overflow: hidden;
+      transition: all 0.4s var(--ease);
+    }
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), var(--beacon-glow), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+      pointer-events: none;
+    }
+    .bento-card:hover { border-color: var(--ink-line-2); transform: translateY(-3px); }
+    .bento-card:hover::before { opacity: 0.5; }
+    .bento-card > * { position: relative; z-index: 1; }
+
+    .bento-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      background: rgba(232,176,125,0.08);
+      border: 1px solid rgba(232,176,125,0.18);
+    }
+    .bento-icon.var-azure { background: rgba(127,167,217,0.08); border-color: rgba(127,167,217,0.18); }
+    .bento-icon.var-signal { background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.18); }
+    .bento-icon.var-bone { background: rgba(244,239,230,0.06); border-color: rgba(244,239,230,0.12); }
+
+    .bento-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.3rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+      letter-spacing: -0.01em;
+    }
+    .bento-desc {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .bento-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .bento-num {
+      position: absolute;
+      top: 1.5rem; right: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--bone-4);
+      letter-spacing: 0.1em;
+    }
+
+    .bento-span-3 { grid-column: span 3; }
+    .bento-span-2 { grid-column: span 2; }
+    .bento-span-4 { grid-column: span 4; }
+    .bento-span-6 { grid-column: span 6; }
+
+    @media (max-width: 900px) {
+      .bento { grid-template-columns: repeat(2, 1fr); }
+      .bento-span-3, .bento-span-2, .bento-span-4, .bento-span-6 { grid-column: span 2; }
+    }
+    @media (max-width: 560px) {
+      .bento { grid-template-columns: 1fr; }
+      .bento-span-3, .bento-span-2, .bento-span-4, .bento-span-6 { grid-column: span 1; }
+    }
+
+    /* ===== ARCHITECTURE ===== */
+    .arch-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 920px) { .arch-layout { grid-template-columns: 1fr; } }
+
+    .timeline {
+      position: relative;
+      padding-left: 2.25rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px; top: 8px; bottom: 8px;
+      width: 1px;
+      background: linear-gradient(180deg, var(--beacon), var(--ink-line-2));
+    }
+    .tl-item {
+      position: relative;
+      padding-bottom: 2.25rem;
+    }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -2.25rem; top: 6px;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2px solid var(--beacon);
+      box-shadow: 0 0 0 4px var(--ink), 0 0 16px var(--beacon-glow);
+    }
+    .tl-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--beacon);
+      margin-bottom: 0.4rem;
+    }
+    .tl-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.15rem;
+      color: var(--bone);
+      margin-bottom: 0.4rem;
+    }
+    .tl-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .tl-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .panel {
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 1.75rem;
+      position: relative;
+    }
+    .panel + .panel { margin-top: 1rem; }
+    .panel-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .panel-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--ink-line);
+    }
+    .panel-value {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--bone);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .panel-text { font-size: 0.85rem; color: var(--bone-3); line-height: 1.6; }
+
+    /* Code block */
+    .codeblock {
+      background: var(--ink);
+      border: 1px solid var(--ink-line);
+      border-radius: 16px;
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: var(--bone-2);
+      position: relative;
+      overflow-x: auto;
+    }
+    .codeblock-label {
+      position: absolute;
+      top: 0.875rem; right: 1rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+    }
+    .codeblock .kw { color: var(--beacon); }
+    .codeblock .str { color: var(--signal); }
+    .codeblock .fn { color: var(--azure); }
+    .codeblock .com { color: var(--bone-4); font-style: italic; }
+    .codeblock .dim { color: var(--bone-4); }
+
+    /* File tree */
+    .tree {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.85;
+      color: var(--bone-3);
+    }
+    .tree .hl { color: var(--beacon); }
+    .tree .note { color: var(--bone-4); }
+
+    /* ===== ENDPOINTS ===== */
+    .endpoints {
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--ink-card);
+    }
+    .endpoints table { width: 100%; border-collapse: collapse; }
+    .endpoints thead { background: var(--ink-2); }
+    .endpoints th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      padding: 1.1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--ink-line);
+    }
+    .endpoints td {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--ink-line);
+      font-size: 0.9rem;
+      color: var(--bone-2);
+      vertical-align: middle;
+    }
+    .endpoints tbody tr { transition: background 0.25s var(--ease); }
+    .endpoints tbody tr:hover { background: rgba(232,176,125,0.03); }
+    .endpoints tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid;
+      display: inline-block;
+    }
+    .badge.get { color: var(--signal); background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.25); }
+    .badge.post { color: var(--azure); background: rgba(127,167,217,0.08); border-color: rgba(127,167,217,0.25); }
+    .badge.public { color: var(--signal); background: rgba(138,180,161,0.08); border-color: rgba(138,180,161,0.25); }
+    .badge.protected { color: var(--ember); background: rgba(217,119,87,0.08); border-color: rgba(217,119,87,0.25); }
+
+    .path {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--bone);
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.4s var(--ease);
+    }
+    .step:hover { border-color: var(--beacon); transform: translateY(-3px); }
+    .step-num {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 3rem;
+      line-height: 1;
+      color: var(--beacon);
+      opacity: 0.5;
+      margin-bottom: 1rem;
+    }
+    .step-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+    }
+    .step-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--bone-3);
+    }
+    .step-desc code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .step-desc strong { color: var(--bone); font-weight: 500; }
+    .step-desc em { font-style: italic; color: var(--bone); }
+
+    .result-banner {
+      margin-top: 1rem;
+      background: linear-gradient(135deg, rgba(138,180,161,0.08), rgba(232,176,125,0.05));
+      border: 1px solid rgba(138,180,161,0.25);
+      border-radius: 20px;
+      padding: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    @media (max-width: 720px) { .result-banner { flex-direction: column; text-align: center; } }
+    .result-mic {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: rgba(138,180,161,0.1);
+      border: 1px solid rgba(138,180,161,0.3);
+      display: grid;
+      place-items: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      box-shadow: 0 0 24px rgba(138,180,161,0.15);
+    }
+    .result-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.3rem;
+      color: var(--signal);
+      margin-bottom: 0.5rem;
+    }
+    .result-desc { font-size: 0.95rem; line-height: 1.6; color: var(--bone-2); }
+    .result-desc em { font-style: italic; color: var(--bone); }
+
+    /* ===== USERS ===== */
+    .users {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 980px) { .users { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .users { grid-template-columns: 1fr; } }
+    .user-card {
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 20px;
+      padding: 2rem;
+      transition: all 0.4s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+    .user-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--beacon), transparent);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+    }
+    .user-card:hover { border-color: var(--ink-line-2); transform: translateY(-3px); }
+    .user-card:hover::before { opacity: 0.5; }
+    .user-emoji {
+      font-size: 2rem;
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+    .user-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: var(--bone);
+      margin-bottom: 0.625rem;
+    }
+    .user-desc { font-size: 0.88rem; line-height: 1.6; color: var(--bone-3); }
+
+    /* ===== PRICING ===== */
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) { .pricing { grid-template-columns: 1fr; } }
+    .price-card {
+      position: relative;
+      background: var(--ink-card);
+      border: 1px solid var(--ink-line);
+      border-radius: 24px;
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s var(--ease);
+    }
+    .price-card:hover { border-color: var(--ink-line-2); }
+    .price-card.featured {
+      border-color: var(--beacon);
+      background: linear-gradient(180deg, rgba(232,176,125,0.06), var(--ink-card));
+      box-shadow: 0 0 40px rgba(232,176,125,0.08);
+    }
+    .price-flag {
+      position: absolute;
+      top: -0.75rem; left: 50%;
+      transform: translateX(-50%);
+      background: var(--beacon);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .price-name {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.4rem;
+      color: var(--bone);
+      margin-bottom: 0.25rem;
+    }
+    .price-name em {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.1rem;
+      color: var(--beacon);
+      margin-left: 0.4rem;
+    }
+    .price-amount {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 3.2rem;
+      color: var(--bone);
+      line-height: 1;
+      margin: 1.25rem 0 0.25rem;
+      letter-spacing: -0.03em;
+    }
+    .price-amount .unit {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: var(--bone-4);
+      font-family: var(--font-sans);
+    }
+    .price-tagline {
+      font-size: 0.88rem;
+      color: var(--bone-3);
+      line-height: 1.55;
+      margin-bottom: 1.75rem;
+      min-height: 2.6em;
+    }
+    .price-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      margin-bottom: 2rem;
+      flex: 1;
+    }
+    .price-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      font-size: 0.88rem;
+      color: var(--bone-2);
+      line-height: 1.5;
+    }
+    .price-features li.dim { color: var(--bone-4); }
+    .price-features li strong { font-weight: 500; color: var(--bone); }
+    .price-features .check { color: var(--signal); flex-shrink: 0; margin-top: 1px; }
+    .price-features .info { color: var(--azure); flex-shrink: 0; margin-top: 1px; }
+    .price-card .btn { width: 100%; justify-content: center; }
+
+    .pledge {
+      margin-top: 1.5rem;
+      background:
+        radial-gradient(ellipse at top left, rgba(127,167,217,0.08), transparent 60%),
+        var(--ink-card);
+      border: 1px solid rgba(127,167,217,0.2);
+      border-radius: 20px;
+      padding: 2.25rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    @media (max-width: 720px) { .pledge { flex-direction: column; } }
+    .pledge-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .pledge-title {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--azure);
+      margin-bottom: 0.625rem;
+    }
+    .pledge-text { font-size: 0.92rem; line-height: 1.65; color: var(--bone-2); max-width: 60ch; }
+    .pledge-text strong { color: var(--bone); font-weight: 500; }
+    .pledge-text em { font-style: italic; color: var(--beacon); }
+
+    /* ===== FAQ ===== */
+    .faq { display: flex; flex-direction: column; }
+    .faq-item { border-bottom: 1px solid var(--ink-line); }
+    .faq-item:first-child { border-top: 1px solid var(--ink-line); }
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      padding: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      color: var(--bone);
+      transition: color 0.25s var(--ease);
+      font-family: inherit;
+    }
+    .faq-q:hover { color: var(--beacon); }
+    .faq-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--bone-4);
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+      width: 2rem;
+      transition: color 0.25s var(--ease);
+    }
+    .faq-item.open .faq-num, .faq-q:hover .faq-num { color: var(--beacon); }
+    .faq-text {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.1rem;
+      flex: 1;
+      letter-spacing: -0.01em;
+      transition: color 0.25s var(--ease);
+    }
+    .faq-q:hover .faq-text { color: var(--beacon); }
+    .faq-toggle {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--ink-line-2);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: all 0.35s var(--ease);
+      color: var(--bone-3);
+      position: relative;
+    }
+    .faq-toggle::before, .faq-toggle::after {
+      content: '';
+      position: absolute;
+      background: currentColor;
+      transition: transform 0.35s var(--ease);
+    }
+    .faq-toggle::before { width: 10px; height: 1.5px; }
+    .faq-toggle::after { width: 1.5px; height: 10px; }
+    .faq-item.open .faq-toggle {
+      background: var(--beacon);
+      border-color: var(--beacon);
+      color: var(--ink);
+    }
+    .faq-item.open .faq-toggle::after { transform: rotate(90deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s var(--ease);
+    }
+    .faq-item.open .faq-a { max-height: 600px; }
+    .faq-a-inner {
+      padding: 0 0 1.5rem 3.25rem;
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: var(--bone-3);
+      max-width: 56rem;
+    }
+    .faq-a-inner code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--beacon);
+      background: rgba(232,176,125,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .faq-a-inner em { font-style: italic; color: var(--bone-2); }
+    .faq-a-inner strong { color: var(--bone); font-weight: 500; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      position: relative;
+      background: var(--ink-2);
+      border-top: 1px solid var(--ink-line);
+      padding: 5rem var(--gut) 2.5rem;
+      z-index: 1;
+    }
+    .footer-inner { max-width: var(--maxw); margin: 0 auto; }
+    .footer-mark {
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-style: italic;
+      font-size: clamp(3rem, 9vw, 7rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--bone);
+      margin-bottom: 3rem;
+      background: linear-gradient(180deg, var(--bone), var(--bone-4));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .footer-mark em { font-style: italic; color: var(--beacon); -webkit-text-fill-color: var(--beacon); }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 3rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--ink-line);
+    }
+    @media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+    .footer-heading {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bone-4);
+      margin-bottom: 1.25rem;
+    }
+    .footer-desc { font-size: 0.9rem; line-height: 1.65; color: var(--bone-3); max-width: 28rem; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
+    .footer-links a {
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--bone-3);
+      transition: color 0.25s var(--ease);
+      text-decoration: none;
+    }
+    .footer-links a:hover { color: var(--beacon); }
+    .footer-bottom {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--bone-4);
+    }
+
+    /* ===== REVEAL ANIMATION ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.08s; }
+    .reveal-d2 { transition-delay: 0.16s; }
+    .reveal-d3 { transition-delay: 0.24s; }
+    .reveal-d4 { transition-delay: 0.32s; }
+    .reveal-d5 { transition-delay: 0.40s; }
+
+    /* ===== RESPONSIVE NAV ===== */
+    @media (max-width: 1000px) {
+      .nav-links { display: none; }
+      .nav-toggle { display: flex; }
+      .nav-links.mobile-open {
+        display: flex;
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0; right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+        padding: 1rem;
+        background: rgba(15,15,18,0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--ink-line-2);
+        border-radius: 20px;
+      }
+      .nav-links.mobile-open a { padding: 0.875rem 1rem; }
+    }
+
+    @media (max-width: 720px) {
+      .endpoints { overflow-x: auto; }
+      .endpoints table { min-width: 560px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Scroll progress -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- ===== NAV ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav-bar">
+      <a href="#top" class="nav-logo">
+        <span class="nav-logo-mark">K</span>
+        Keryx
+        <span class="nav-logo-version">v0.1.0</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#endpoints">API</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#users">Users</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com" class="nav-cta">GitHub <span>↗</span></a></li>
+        <li><a href="index.html" class="nav-lang">SR</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="hero-status reveal">
+        <span class="status-dot"></span>
+        Open-Source <span class="sep">·</span> Self-Hosted <span class="sep">·</span> <span class="tag">MIT License</span>
+      </div>
+
+      <h1 class="hero-title reveal reveal-d1">
+        Give your business<br>
+        <em>a voice with Siri</em>
+      </h1>
+
+      <p class="hero-desc reveal reveal-d2">
+        Install Keryx on your website and deliver an incredible user experience. Ask Siri: <em>"What is my current balance?"</em> or <em>"How many unread news items do I have?"</em> — and Keryx will instantly reply with data from your website via an absolutely secure protocol.
+      </p>
+
+      <div class="hero-actions reveal reveal-d3">
+        <a href="#features" class="btn btn-primary">
+          Explore features
+          <span class="btn-icon">↓</span>
+        </a>
+        <a href="#architecture" class="btn btn-secondary">How it works</a>
+      </div>
+
+      <!-- SIGNAL BRIDGE -->
+      <div class="bridge reveal reveal-d4">
+        <div class="bridge-grid"></div>
+        <div class="bridge-label">Signal Bridge · Voice → Keryx → Your site</div>
+        <div class="bridge-flow">
+          <div class="bridge-node">
+            <div class="bridge-node-icon">🎤</div>
+            <div class="bridge-node-name">Siri</div>
+            <div class="bridge-node-label">Voice</div>
+          </div>
+
+          <div class="bridge-wire">
+            <svg preserveAspectRatio="none" viewBox="0 0 120 2">
+              <line class="wire-line" x1="0" y1="1" x2="120" y2="1"/>
+              <circle class="bridge-pulse" r="3" cy="1">
+                <animate attributeName="cx" values="0;120" dur="2.4s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0;1;1;0" dur="2.4s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+
+          <div class="bridge-node featured">
+            <div class="bridge-node-icon">☁️</div>
+            <div class="bridge-node-name">Keryx</div>
+            <div class="bridge-node-label">Gateway</div>
+          </div>
+
+          <div class="bridge-wire">
+            <svg preserveAspectRatio="none" viewBox="0 0 120 2">
+              <line class="wire-line" x1="0" y1="1" x2="120" y2="1"/>
+              <circle class="bridge-pulse" r="3" cy="1">
+                <animate attributeName="cx" values="0;120" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0;1;1;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+
+          <div class="bridge-node">
+            <div class="bridge-node-icon">🌐</div>
+            <div class="bridge-node-name">Your site</div>
+            <div class="bridge-node-label">API</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MARQUEE ===== -->
+  <div class="marquee">
+    <div class="marquee-track" id="marqueeTrack">
+      <span class="marquee-item"><span class="platform">ChatGPT</span><span class="meta">OpenAI Actions</span></span>
+      <span class="marquee-item"><span class="platform">Siri</span><span class="meta">Apple Shortcuts</span></span>
+      <span class="marquee-item"><span class="platform">Gemini</span><span class="meta">Function Calling</span></span>
+      <span class="marquee-item"><span class="platform">Claude</span><span class="meta">Model Context Protocol</span></span>
+      <span class="marquee-item"><span class="platform">ChatGPT</span><span class="meta">OpenAI Actions</span></span>
+      <span class="marquee-item"><span class="platform">Siri</span><span class="meta">Apple Shortcuts</span></span>
+      <span class="marquee-item"><span class="platform">Gemini</span><span class="meta">Function Calling</span></span>
+      <span class="marquee-item"><span class="platform">Claude</span><span class="meta">Model Context Protocol</span></span>
+    </div>
+  </div>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="section" id="features">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Key Features</div>
+        <h2 class="display">
+          <span class="row">Everything you need,</span>
+          <span class="row"><em>in one place</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Keryx unifies two modules — Next-Gen for LLM integration and Legacy for Apple Siri Shortcuts — into a single, modular system with a shared tool registry.
+        </p>
+      </div>
+
+      <div class="bento">
+        <div class="bento-card bento-span-3 reveal">
+          <span class="bento-num">01</span>
+          <div class="bento-icon var-azure">🤖</div>
+          <h3 class="bento-title">MCP Server</h3>
+          <p class="bento-desc">
+            Model Context Protocol endpoint for direct communication with Claude, ChatGPT and other LLMs. Streamable HTTP transport in stateless mode — ideal for load balancing.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-3 reveal reveal-d1">
+          <span class="bento-num">02</span>
+          <div class="bento-icon">📋</div>
+          <h3 class="bento-title">OpenAPI 3.1 Schema</h3>
+          <p class="bento-desc">
+            Automatically generated OpenAPI schema from Zod definitions. LLM agents read it to discover available functions and how to communicate with your platform.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal">
+          <span class="bento-num">03</span>
+          <div class="bento-icon var-bone">📱</div>
+          <h3 class="bento-title">Siri Shortcuts</h3>
+          <p class="bento-desc">
+            Generate Apple <code>.shortcut</code> files from URL and token. iOS users download the shortcut which executes an HTTP request with an Authorization header in one tap.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal reveal-d1">
+          <span class="bento-num">04</span>
+          <div class="bento-icon var-signal">🔐</div>
+          <h3 class="bento-title">Security</h3>
+          <p class="bento-desc">
+            Timing-safe authentication, CORS policy, rate limiting (100 req/min), input validation with Zod schema, and ScPL injection protection.
+          </p>
+        </div>
+
+        <div class="bento-card bento-span-2 reveal reveal-d2">
+          <span class="bento-num">05</span>
+          <div class="bento-icon">🐳</div>
+          <h3 class="bento-title">Docker-Ready</h3>
+          <p class="bento-desc">
+            Multi-stage Dockerfile, non-root user, healthcheck endpoint. Runs with a single command: <code>docker-compose up</code>. Optimized for WSL2 and Proxmox.
+          </p>
+        </div>
+      </div>
+
+      <div class="bento-card bento-span-6 reveal reveal-d1" style="margin-top: 1rem;">
+        <span class="bento-num">06</span>
+        <div class="bento-icon var-azure">⚙️</div>
+        <h3 class="bento-title">REST API</h3>
+        <p class="bento-desc">
+          Every registered tool automatically gets a REST endpoint at <code>/api/tools/&lt;name&gt;</code>. Standard JSON request/response with validation and detailed errors.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="section" id="architecture">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Architecture</div>
+        <h2 class="display">
+          <span class="row">One registry,</span>
+          <span class="row"><em>three surfaces</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          The heart of Keryx is the shared tool registry. Each tool is defined ONCE as a Zod schema + handler, and all three API surfaces are generated automatically from it.
+        </p>
+      </div>
+
+      <div class="arch-layout">
+        <div class="reveal">
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-tag">Layer 1 — Definition</div>
+              <div class="tl-title">Tool Registry</div>
+              <div class="tl-desc"><code>src/core/registry.ts</code> — central storage. Each tool has a name, Zod input schema, description, and handler function. Modules register tools on initialization.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Layer 2 — Generation</div>
+              <div class="tl-title">Automatic Exposure</div>
+              <div class="tl-desc">Generated from the registry: OpenAPI 3.1 schema (<code>GET /openapi.json</code>), MCP tool list (<code>POST /mcp</code>), and REST routes (<code>POST /api/tools/*</code>).</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Layer 3 — Modules</div>
+              <div class="tl-title">Next-Gen + Legacy</div>
+              <div class="tl-desc">Each module lives in its own directory and registers tools independently. Adding a new tool = new Zod schema + handler, without touching the core code.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-tag">Layer 4 — Transport</div>
+              <div class="tl-title">Express HTTP server</div>
+              <div class="tl-desc">Express 4 with CORS, rate limit, timing-safe auth middleware. Graceful shutdown (SIGTERM/SIGINT) for Docker/Kubernetes.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal reveal-d2" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="panel">
+            <div class="panel-label">Principle</div>
+            <div class="panel-value">Single source of truth</div>
+            <div class="panel-text">OpenAPI schema and MCP server are built from the same definitions — they can never diverge.</div>
+          </div>
+
+          <div class="codeblock">
+            <span class="codeblock-label">registry.ts</span>
+<span class="com">// Define tool once...</span>
+<span class="kw">const</span> myTool = {
+  name: <span class="str">"create_shortcut"</span>,
+  input: z.object({
+    url: z.string().<span class="fn">url</span>(),
+    token: z.string().<span class="fn">min</span>(1),
+  }),
+  handler: <span class="kw">async</span> (input) => {
+    <span class="com">// ...generate shortcut</span>
+  }
+};
+
+<span class="com">// ...register once...</span>
+registry.<span class="fn">register</span>(myTool);
+
+<span class="com">// ...appears EVERYWHERE:</span>
+<span class="dim">// ✓ GET  /openapi.json</span>
+<span class="dim">// ✓ POST /mcp</span>
+<span class="dim">// ✓ POST /api/tools/create_shortcut</span>
+          </div>
+
+          <div class="panel">
+            <div class="panel-label">File Structure</div>
+            <div class="tree">
+src/<br>
+├── config/<span class="hl">env.ts</span><br>
+├── core/<br>
+│&nbsp;&nbsp; ├── <span class="hl">registry.ts</span> <span class="note">← source of truth</span><br>
+│&nbsp;&nbsp; └── <span class="hl">openapi.ts</span><br>
+├── modules/<br>
+│&nbsp;&nbsp; ├── nextgen/ <span class="note">(MCP, echo, status)</span><br>
+│&nbsp;&nbsp; └── legacy/ <span class="note">(Siri Shortcuts)</span><br>
+├── <span class="hl">server.ts</span><br>
+└── <span class="hl">index.ts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ENDPOINTS ===== -->
+  <section class="section" id="endpoints">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">API Endpoints</div>
+        <h2 class="display">
+          <span class="row">The complete</span>
+          <span class="row"><em>API map</em></span>
+        </h2>
+      </div>
+
+      <div class="endpoints reveal reveal-d1">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Path</th>
+              <th>Auth</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/healthz</span></td>
+              <td><span class="badge public">Public</span></td>
+              <td>Health check for Docker / load balancer</td>
+            </tr>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/openapi.json</span></td>
+              <td><span class="badge public">Public</span></td>
+              <td>OpenAPI 3.1 schema for Claude / ChatGPT</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/mcp</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>MCP Streamable HTTP (stateless)</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/gateway_status</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Gateway status and tool list</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/echo</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Echo message (connection test)</td>
+            </tr>
+            <tr>
+              <td><span class="badge post">POST</span></td>
+              <td><span class="path">/api/tools/create_shortcut</span></td>
+              <td><span class="badge protected">Token</span></td>
+              <td>Generate Apple Siri shortcut</td>
+            </tr>
+            <tr>
+              <td><span class="badge get">GET</span></td>
+              <td><span class="path">/api/shortcuts/:id</span></td>
+              <td><span class="badge public">Public</span></td>
+              <td>Download .shortcut file (capability URL)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="section" id="how-it-works">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">How it works in practice</div>
+        <h2 class="display">
+          <span class="row">From a click on the site</span>
+          <span class="row"><em>to an iPhone shortcut</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          How does this actually look to your users? If you are not a developer, here is how the whole process goes — smoothly and without installing special apps.
+        </p>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-num">01</div>
+          <h3 class="step-title">Click on your site</h3>
+          <p class="step-desc">
+            The user is logged into your web app. You place a simple <strong>"Add to my iPhone"</strong> button. When clicked, your app silently sends an instruction and the user's token to Keryx.
+          </p>
+        </div>
+        <div class="step reveal reveal-d1">
+          <div class="step-num">02</div>
+          <h3 class="step-title">Keryx does the magic</h3>
+          <p class="step-desc">
+            In a fraction of a second, Keryx packages those instructions and generates a native Apple shortcut file (<code>.shortcut</code>). Keryx then returns a secure download link for that file to your site.
+          </p>
+        </div>
+        <div class="step reveal reveal-d2">
+          <div class="step-num">03</div>
+          <h3 class="step-title">Adding to the phone</h3>
+          <p class="step-desc">
+            The user's phone automatically downloads the file. The built-in <strong>Shortcuts</strong> app opens on the iPhone. The user simply confirms with "Add Shortcut" and that's it.
+          </p>
+        </div>
+      </div>
+
+      <div class="result-banner reveal reveal-d3">
+        <div class="result-mic">🎤</div>
+        <div>
+          <div class="result-title">End result: Voice control</div>
+          <p class="result-desc">
+            Now your user can say: <em>"Hey Siri, do this and that"</em>. Their phone will secretly call your site in the background, using their secure token. The user didn't have to configure anything, install anything from the App Store, or enter passwords!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== USERS ===== -->
+  <section class="section" id="users">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Who uses Keryx</div>
+        <h2 class="display">
+          <span class="row">Built for</span>
+          <span class="row"><em>various needs</em></span>
+        </h2>
+      </div>
+
+      <div class="users">
+        <div class="user-card reveal">
+          <span class="user-emoji">🧑‍💻</span>
+          <h3 class="user-title">Web developers</h3>
+          <p class="user-desc">Who want to expose their platform functionality to AI agents without writing an MCP server from scratch. Register a tool — and Claude uses it instantly.</p>
+        </div>
+        <div class="user-card reveal reveal-d1">
+          <span class="user-emoji">🏢</span>
+          <h3 class="user-title">Companies with internal tools</h3>
+          <p class="user-desc">Self-hosted: data never leaves your infrastructure. Ideal for internal APIs that need to be accessible to voice assistants and LLMs.</p>
+        </div>
+        <div class="user-card reveal reveal-d2">
+          <span class="user-emoji">📱</span>
+          <h3 class="user-title">iOS users and automators</h3>
+          <p class="user-desc">Generate Siri shortcuts that call your API with a single tap. The bearer token is embedded in the shortcut — no need to type any credentials.</p>
+        </div>
+        <div class="user-card reveal reveal-d3">
+          <span class="user-emoji">🏠</span>
+          <h3 class="user-title">Homelab enthusiasts</h3>
+          <p class="user-desc">50MB Docker container, built-in healthcheck, runs on Proxmox/WSL2. Run it on your NAS or mini server and connect it with AI tools.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section class="section" id="pricing">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Pricing</div>
+        <h2 class="display">
+          <span class="row">Flexible plans for</span>
+          <span class="row"><em>every business</em></span>
+        </h2>
+        <p class="lede" style="margin-top: 1.5rem;">
+          Built on blazing-fast technology, Keryx allows us to offer premium service at minimal costs. Start for free and pay only when your business grows.
+        </p>
+      </div>
+
+      <div class="pricing">
+        <!-- FREE -->
+        <div class="price-card reveal">
+          <div class="price-name">Free <em>The Hook</em></div>
+          <div class="price-amount">$0<span class="unit"> / month</span></div>
+          <p class="price-tagline">Perfect for startups and small businesses to test the integration.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>All Keryx features</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Up to 1,000 AI interactions</strong> / month</span></li>
+            <li><span class="check">✓</span> <span>Website integration (MCP + Siri)</span></li>
+            <li class="dim"><span class="info">ℹ</span> <span>Subtle "Powered by Keryx.ai" branding</span></li>
+          </ul>
+          <a href="#" class="btn btn-secondary">Get started for free</a>
+        </div>
+
+        <!-- PRO -->
+        <div class="price-card featured reveal reveal-d1">
+          <span class="price-flag">Most Popular</span>
+          <div class="price-name">Pro</div>
+          <div class="price-amount">$29<span class="unit"> / month</span></div>
+          <p class="price-tagline">For growing businesses that need unlimited access and analytics.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>Unlimited interactions</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Keryx.ai branding removed</strong> (White-label)</span></li>
+            <li><span class="check">✓</span> <span><strong>Detailed analytics</strong> (user queries)</span></li>
+            <li><span class="check">✓</span> <span>Advanced CRM and Stripe integrations</span></li>
+            <li><span class="check">✓</span> <span>Increased response speed (Priority Queue)</span></li>
+          </ul>
+          <a href="#" class="btn btn-primary">Upgrade to Pro</a>
+        </div>
+
+        <!-- ENTERPRISE -->
+        <div class="price-card reveal reveal-d2">
+          <div class="price-name">Enterprise</div>
+          <div class="price-amount">Custom</div>
+          <p class="price-tagline">For high-volume e-commerce sites with hundreds of thousands of visits.</p>
+          <ul class="price-features">
+            <li><span class="check">✓</span> <span><strong>Everything in Pro</strong></span></li>
+            <li><span class="check">✓</span> <span><strong>Dedicated infrastructure</strong></span></li>
+            <li><span class="check">✓</span> <span>99.99% SLA uptime guarantee</span></li>
+            <li><span class="check">✓</span> <span>Maximum security and data encryption</span></li>
+            <li><span class="check">✓</span> <span>24/7 Premium support</span></li>
+          </ul>
+          <a href="#" class="btn btn-secondary">Contact Sales</a>
+        </div>
+      </div>
+
+      <!-- OPEN SOURCE PLEDGE -->
+      <div class="pledge reveal reveal-d2">
+        <div class="pledge-icon">🔓</div>
+        <div>
+          <h3 class="pledge-title">Why is Keryx Open-Source?</h3>
+          <p class="pledge-text">
+            We play the <strong>transparency and security</strong> card. Because the system handles your API tokens, our code is always 100% public on GitHub so you can be completely certain there are no hidden actions. We don't sell secret code — we sell <em>"Keryx as a Service"</em> to those who want a worry-free, fully managed solution that runs 24/7.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="section" id="faq">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div class="eyebrow">Frequently Asked Questions</div>
+        <h2 class="display">
+          <span class="row">Questions and</span>
+          <span class="row"><em>answers</em></span>
+        </h2>
+      </div>
+
+      <div class="faq reveal reveal-d1">
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">01</span>
+            <span class="faq-text">What is Keryx and what is it for?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx is an open-source, self-hosted API gateway serving as a bridge between your web platform and AI assistants (Claude, ChatGPT, Siri). Instead of writing a separate integration for each AI agent, you register a tool once in Keryx — and it automatically appears as an MCP tool, OpenAPI operation, and REST endpoint.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">02</span>
+            <span class="faq-text">Do I have to use a cloud service?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            No. Keryx is fully self-hosted — run it on your server, NAS, or even a Raspberry Pi. Your data never passes through third parties. All you need is Docker or Node.js ≥ 20.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">03</span>
+            <span class="faq-text">What is MCP (Model Context Protocol)?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            MCP is an open protocol that enables LLM agents (like Claude) to discover and call external tools. Keryx implements an MCP server via Streamable HTTP transport in stateless mode — the agent sends a JSON-RPC request to <code>/mcp</code> and gets a tool list or executes an operation.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">04</span>
+            <span class="faq-text">How do Siri Shortcuts work?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            You send a POST request with a URL and a Bearer token to <code>/api/tools/create_shortcut</code>. Keryx generates an Apple <code>.shortcut</code> file (binary property list) containing the embedded HTTP request. You get a download link — the iOS user opens it, adds the shortcut, and with a single tap (or voice command) calls your API.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">05</span>
+            <span class="faq-text">Is it safe to embed a token in a shortcut?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            The token embedded in the shortcut is the token for <em>your target API</em>, not the Keryx gateway token. It is visible to anyone who downloads the <code>.shortcut</code> file — this is by design, because the shortcut must work autonomously. We recommend using tokens with limited permissions and a short lifespan. The download link expires after 10 minutes and contains an unguessable 128-bit ID.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">06</span>
+            <span class="faq-text">How do I add my own tool?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Create a file in <code>src/modules/</code>, define a Zod schema for input, write a handler function, and call <code>registry.register(myTool)</code>. Keryx automatically generates an OpenAPI schema, MCP tool and REST route. You don't need to touch the core code — see <code>src/modules/nextgen/tools.ts</code> as an example.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">07</span>
+            <span class="faq-text">How many tools can Keryx support?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            There is no technical limit. The registry is an in-memory Map populated on startup. With 100 tools, the OpenAPI schema is just a few KB. The MCP list is generated from the same registry. The only bottleneck would be memory for the shortcut store (configured via <code>KERYX_SHORTCUT_STORE_MAX</code>).
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">08</span>
+            <span class="faq-text">How do I run Keryx in production?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            The easiest way: <code>cp .env.example .env</code>, set <code>KERYX_API_TOKEN</code> and <code>PUBLIC_BASE_URL</code>, then run <code>docker-compose up -d</code>. The container uses Node.js 20 Alpine, runs as a non-root user, with a built-in healthcheck.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">09</span>
+            <span class="faq-text">Does Keryx support WebSocket or SSE?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            MCP transport uses Streamable HTTP which can internally use SSE for streaming responses. However, Keryx works in stateless mode — each request is independent, with no long-lived connections. For real-time functions, a tool can integrate WebSockets in its handler.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">10</span>
+            <span class="faq-text">Which TypeScript/Node.js version is required?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Node.js ≥ 20 (ESM, <code>"type": "module"</code>). TypeScript 5.7+ in strict mode. For development, <code>tsx</code> (watch mode) is used, and for production it compiles to JavaScript with <code>npm run build</code>.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">11</span>
+            <span class="faq-text">What is the "shared registry" and why does it matter?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            The shared registry is the central place where every tool is defined exactly once. From it, the OpenAPI schema, MCP tools, and REST routes are all generated. This means it is impossible for these three surfaces to diverge — if you add a parameter to the Zod schema, it automatically shows up everywhere. This eliminates an entire category of bugs.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">12</span>
+            <span class="faq-text">What happens if the shortcut download link expires?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            The download link expires after <code>KERYX_SHORTCUT_TTL_MS</code> (default 10 minutes). After that, <code>GET /api/shortcuts/:id</code> returns 404 with the message "Shortcut not found or expired." The user can request a new shortcut. This prevents files from accumulating in memory.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">13</span>
+            <span class="faq-text">Can I use Keryx without authentication?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Yes, for local development. If you leave <code>KERYX_API_TOKEN</code> empty in <code>.env</code>, authentication is disabled. In production, be sure to set a token — all protected endpoints require an <code>Authorization: Bearer &lt;token&gt;</code> header.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">14</span>
+            <span class="faq-text">Does Keryx work on Windows / WSL2?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Yes. Keryx is designed for WSL2 and Proxmox environments. The Docker container uses Alpine Linux and has no platform-specific dependencies. It can also be run directly via Node.js on Windows, but the Docker approach is recommended.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">15</span>
+            <span class="faq-text">How do I contribute to the project?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx is MIT licensed and open for contributions. Fork the repository, add a module or tool following the pattern in <code>src/modules/nextgen/tools.ts</code>, run <code>npm run typecheck</code> to check types, and open a Pull Request. Check <code>docs/internal/TODO.md</code> for planned features.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">16</span>
+            <span class="faq-text">Does Keryx slow down my app?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Absolutely not. Keryx runs on your server and processes requests in a fraction of a second. Because it is stateless and written in Node.js with asynchronous flows, it can handle a massive number of concurrent requests without blocking your main site.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">17</span>
+            <span class="faq-text">Do I need an Apple Developer account or an App Store app?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            No! That is the biggest advantage of Keryx. Shortcuts are built into every iPhone. Your user can communicate with your site using just their phone and voice, without you ever having to build and publish an app on the App Store.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">18</span>
+            <span class="faq-text">Can users see my secret API token?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Your main Keryx API token is hidden on your server. But <strong>your user's</strong> token (which they use to prove their identity when Siri makes a request) is embedded in the shortcut on their phone. This is their personal token, so they only control their own account with it.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">19</span>
+            <span class="faq-text">How much does using Keryx cost?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Keryx is a 100% free and open-source project under the MIT license. There are no monthly subscriptions, no feature limits, and you can modify and use it in commercial projects.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">20</span>
+            <span class="faq-text">Does it work on Android devices?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            The Next-Gen module (MCP and OpenAPI) works everywhere — on any LLM assistant (Claude, ChatGPT). However, the Legacy module is specifically designed to generate <code>.shortcut</code> files that work exclusively on iOS, iPadOS, and macOS devices.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">21</span>
+            <span class="faq-text">What do I need on my server to run it?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            You just need a server where you can run Docker (which is most modern servers). Alternatively, you can run it without Docker if you have Node.js version 20 or newer installed.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">22</span>
+            <span class="faq-text">Why is Keryx better than Zapier or Make, for example?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Systems like Zapier charge based on the number of tasks completed, store your users' data on their servers, and require setup by the user. Keryx lives on your server, is completely free unlimited, and shortcuts are generated automatically for each user.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">23</span>
+            <span class="faq-text">Does Keryx store data about my users in a database?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            No. Keryx does not have a database at all (it is stateless). Generated shortcuts are only stored temporarily in memory (RAM) until the user downloads them (maximum 10 minutes), after which they are irreversibly deleted. Your data remains yours.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">24</span>
+            <span class="faq-text">How much programming do I need for integration?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            Minimal. Our "shared registry" system guides you through creating a tool. It is enough to know a little TypeScript/JavaScript, define which fields your operation requires using the Zod library, and Keryx handles all the heavy lifting of the exposure architecture.
+          </div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" data-faq>
+            <span class="faq-num">25</span>
+            <span class="faq-text">What if Apple or OpenAI change their protocols?</span>
+            <span class="faq-toggle"></span>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner">
+            This is exactly why Keryx exists as a middleware! If changes occur, our open-source team will update Keryx's code. You just update your Keryx installation on your server, while the code of your main site remains absolutely untouched.
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-mark reveal">Keryx<em>.</em></div>
+      <div class="footer-grid">
+        <div class="reveal">
+          <div class="footer-heading">About the project</div>
+          <p class="footer-desc">
+            Keryx AI Gateway — the open-source bridge between web platforms and AI assistants. Self-hosted, modular, secure.
+          </p>
+        </div>
+        <div class="reveal reveal-d1">
+          <div class="footer-heading">Documentation</div>
+          <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#endpoints">API Map</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="reveal reveal-d2">
+          <div class="footer-heading">Resources</div>
+          <ul class="footer-links">
+            <li><a href="#">README.md</a></li>
+            <li><a href="#">DESIGN_SYSTEM.md</a></li>
+            <li><a href="#">.env.example</a></li>
+            <li><a href="#">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="reveal reveal-d3">
+          <div class="footer-heading">Stack</div>
+          <ul class="footer-links">
+            <li><a href="#">Node.js / TypeScript</a></li>
+            <li><a href="#">Express 4</a></li>
+            <li><a href="#">MCP SDK</a></li>
+            <li><a href="#">Zod</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Keryx AI Gateway · MIT License</span>
+        <span>v0.1.0</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== SCROLL PROGRESS =====
+    const progress = document.getElementById('scrollProgress');
+    const nav = document.getElementById('nav');
+    const onScroll = () => {
+      const h = document.documentElement;
+      const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+      progress.style.width = scrolled + '%';
+      nav.classList.toggle('scrolled', h.scrollTop > 40);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // ===== REVEAL ON SCROLL =====
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ===== FAQ ACCORDION =====
+    document.querySelectorAll('[data-faq]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const wasOpen = item.classList.contains('open');
+        item.classList.toggle('open', !wasOpen);
+      });
+    });
+
+    // ===== SMOOTH SCROLL (offset for fixed nav) =====
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const id = this.getAttribute('href');
+        if (id === '#' || id.length < 2) return;
+        const target = document.querySelector(id);
+        if (target) {
+          e.preventDefault();
+          const y = target.getBoundingClientRect().top + window.scrollY - 90;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+          document.getElementById('navLinks').classList.remove('mobile-open');
+          document.getElementById('navToggle').classList.remove('open');
+        }
+      });
+    });
+
+    // ===== MOBILE NAV =====
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('mobile-open');
+      navToggle.classList.toggle('open');
+    });
+  </script>
+
+</body>
+</html>

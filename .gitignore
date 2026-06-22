@@ -1,0 +1,35 @@
+# Log fajlovi
+logs
+*.log
+npm-debug.log*
+
+# Instalirane biblioteke
+node_modules/
+
+# Build izlaz (TypeScript -> JavaScript)
+dist/
+
+# Konfiguracija i tajni ključevi (NAJBITNIJE!)
+.env
+.env.local
+config.json
+secret*
+*.key
+*.pem
+
+# Mac/Windows sistemski fajlovi
+.DS_Store
+Thumbs.db
+
+# Generisani fajlovi (Keryx izlazni fajlovi)
+*.shortcut
+generated_schemas/
+
+# Izlaz alata za analizu koda (generisano, ne commitovati)
+graphify-out/
+
+# Lokalne postavke editora / agenata
+.claude/settings.local.json
+
+# Interne beleške (ne u javni repo)
+docs/internal/
