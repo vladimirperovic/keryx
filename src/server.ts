@@ -15,7 +15,7 @@ import { registerNextGenModule } from "./modules/nextgen/tools.js";
 import { registerLegacyModule } from "./modules/legacy/index.js";
 import { shortcutStore } from "./modules/legacy/tools.js";
 
-const SERVICE = { name: "keryx", version: "0.1.0" } as const;
+const SERVICE = { name: "keryx", version: "0.1.1" } as const;
 
 /**
  * Sastavlja kompletnu Express aplikaciju. Izdvojeno od `index.ts` (pokretanje)
