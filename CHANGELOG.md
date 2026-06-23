@@ -35,3 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy module: Apple Siri Shortcuts generator (`create_shortcut`).
 - Next-Gen module: `gateway_status` and `echo` tools.
 - Docker support with a health check, request rate limiting, and configurable CORS.
+
+[0.1.1]: https://github.com/vladimirperovic/keryx/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/vladimirperovic/keryx/releases/tag/v0.1.0
