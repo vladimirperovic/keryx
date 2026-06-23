@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keryx — Console (mockup)</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#0a0a0c; --ink-2:#0f0f12; --ink-3:#141418; --ink-card:#16161b;
+      --ink-line:rgba(244,239,230,.08); --ink-line-2:rgba(244,239,230,.14);
+      --bone:#f4efe6; --bone-2:#d8d2c4; --bone-3:#9b958a; --bone-4:#5c574f;
+      --beacon:#e8b07d; --beacon-2:#d4a574; --beacon-glow:rgba(232,176,125,.22);
+      --signal:#8ab4a1; --azure:#7fa7d9; --ember:#d97757;
+      --font-display:'Fraunces',Georgia,serif;
+      --font-sans:'Geist',-apple-system,system-ui,sans-serif;
+      --font-mono:'JetBrains Mono','IBM Plex Mono',monospace;
+      --ease:cubic-bezier(.22,1,.36,1); --maxw:1280px; --gut:2rem;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:var(--font-sans);background:var(--ink);color:var(--bone-2);-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;
+      background-image:radial-gradient(900px 500px at 85% -5%,rgba(232,176,125,.06),transparent 60%),radial-gradient(700px 500px at 0% 100%,rgba(127,167,217,.045),transparent 55%);}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gut)}
+    .mono{font-family:var(--font-mono)}
+
+    /* topbar */
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(10,10,12,.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--ink-line)}
+    .topbar-in{display:flex;align-items:center;gap:1rem;height:68px}
+    .brand{display:flex;align-items:center;gap:.7rem}
+    .mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--beacon),var(--beacon-2));display:grid;place-items:center;color:var(--ink);font-family:var(--font-display);font-weight:600;font-size:1.05rem;box-shadow:0 0 16px var(--beacon-glow)}
+    .brand b{font-family:var(--font-display);font-weight:500;font-size:1.15rem;color:var(--bone)}
+    .brand .sub{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bone-4);border:1px solid var(--ink-line);padding:.2rem .5rem;border-radius:6px}
+    .spacer{flex:1}
+    .siteswitch{display:flex;align-items:center;gap:.5rem;font-family:var(--font-mono);font-size:.72rem;color:var(--bone-2);background:var(--ink-3);border:1px solid var(--ink-line);padding:.45rem .8rem;border-radius:8px;cursor:pointer}
+    .siteswitch .car{color:var(--bone-4)}
+    .roleswitch{display:flex;background:var(--ink-3);border:1px solid var(--ink-line);border-radius:100px;padding:3px}
+    .roleswitch button{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bone-3);background:none;border:none;padding:.5rem .95rem;border-radius:100px;cursor:pointer;transition:all .3s var(--ease)}
+    .roleswitch button.on{background:var(--beacon);color:var(--ink);font-weight:600}
+    .userchip{display:flex;align-items:center;gap:.6rem}
+    .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--ink-3),var(--ink-card));border:1px solid var(--ink-line-2);display:grid;place-items:center;font-family:var(--font-display);color:var(--beacon);font-size:.95rem}
+    .userchip .nm{font-size:.85rem;color:var(--bone)} .userchip .rl{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-4)}
+
+    .phead{padding:2.5rem 0 1.25rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+    .phead h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.8rem,3.5vw,2.6rem);letter-spacing:-.02em;color:var(--bone)}
+    .phead h1 em{font-style:italic;font-weight:300;color:var(--beacon)}
+    .phead p{font-size:.9rem;color:var(--bone-3);margin-top:.35rem}
+    .pill{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;color:var(--bone-3);background:rgba(244,239,230,.03);border:1px solid var(--ink-line);padding:.45rem .85rem;border-radius:100px}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 0 rgba(138,180,161,.6);animation:pulse 2.4s infinite}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(138,180,161,.5)}70%{box-shadow:0 0 0 9px rgba(138,180,161,0)}100%{box-shadow:0 0 0 0 rgba(138,180,161,0)}}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem}
+    @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+    .kpi{background:var(--ink-card);border:1px solid var(--ink-line);border-radius:18px;padding:1.3rem 1.4rem;transition:border-color .3s var(--ease)}
+    .kpi:hover{border-color:var(--ink-line-2)}
+    .kpi .lab{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-4);display:flex;justify-content:space-between;align-items:center}
+    .kpi .val{font-family:var(--font-display);font-weight:400;font-size:2.1rem;color:var(--bone);margin-top:.5rem;line-height:1}
+    .kpi .delta{font-family:var(--font-mono);font-size:.7rem;margin-top:.5rem}
+    .up{color:var(--signal)} .down{color:var(--ember)} .muted{color:var(--bone-4)}
+
+    .grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem;margin-bottom:1rem}
+    .grid11{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+    @media(max-width:980px){.grid2,.grid11{grid-template-columns:1fr}}
+    .card{background:var(--ink-card);border:1px solid var(--ink-line);border-radius:20px;padding:1.5rem}
+    .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;gap:1rem}
+    .card-h h3{font-family:var(--font-display);font-weight:500;font-size:1.05rem;color:var(--bone)}
+    .card-h .lab{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-4)}
+
+    .btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--font-sans);font-weight:500;font-size:.82rem;padding:.6rem 1.1rem;border-radius:100px;border:1px solid var(--ink-line-2);background:transparent;color:var(--bone);cursor:pointer;transition:all .3s var(--ease)}
+    .btn:hover{border-color:var(--beacon);color:var(--beacon);background:rgba(232,176,125,.05)}
+    .btn.primary{background:var(--bone);color:var(--ink);border-color:transparent}
+    .btn.primary:hover{background:var(--beacon);color:var(--ink);box-shadow:0 8px 24px var(--beacon-glow)}
+    .btn.sm{padding:.35rem .7rem;font-size:.72rem}
+    .btn.danger:hover{border-color:var(--ember);color:var(--ember);background:rgba(217,119,87,.06)}
+
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl thead{background:var(--ink-2)}
+    .tbl th{font-family:var(--font-mono);font-size:.58rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--bone-4);padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--ink-line)}
+    .tbl td{padding:.8rem 1rem;border-bottom:1px solid var(--ink-line);font-size:.84rem;color:var(--bone-2);vertical-align:middle}
+    .tbl tbody tr{transition:background .2s var(--ease)}
+    .tbl tbody tr:hover{background:rgba(232,176,125,.03)}
+    .tbl tbody tr:last-child td{border-bottom:none}
+    .tablecard{background:var(--ink-card);border:1px solid var(--ink-line);border-radius:20px;overflow:hidden}
+    .u-name{color:var(--bone);font-weight:500} .u-mail{font-family:var(--font-mono);font-size:.66rem;color:var(--bone-4)}
+
+    .badge{font-family:var(--font-mono);font-size:.58rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.25rem .55rem;border-radius:6px;border:1px solid;display:inline-block;white-space:nowrap}
+    .b-admin{color:var(--beacon);background:rgba(232,176,125,.08);border-color:rgba(232,176,125,.3)}
+    .b-member{color:var(--azure);background:rgba(127,167,217,.08);border-color:rgba(127,167,217,.25)}
+    .b-service{color:var(--bone-3);background:rgba(244,239,230,.04);border-color:var(--ink-line-2)}
+    .b-active{color:var(--signal);background:rgba(138,180,161,.08);border-color:rgba(138,180,161,.25)}
+    .b-revoked{color:var(--bone-4);background:rgba(244,239,230,.04);border-color:var(--ink-line-2)}
+    .scope{font-family:var(--font-mono);font-size:.72rem;color:var(--bone-2)} .tok{font-family:var(--font-mono);font-size:.74rem;color:var(--bone-3)}
+
+    .field{margin-bottom:.9rem}
+    .field label{display:block;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-4);margin-bottom:.4rem}
+    .field select,.field input{width:100%;background:var(--ink);border:1px solid var(--ink-line-2);border-radius:10px;color:var(--bone);font-family:var(--font-sans);font-size:.85rem;padding:.6rem .8rem}
+    .field select:focus,.field input:focus{outline:none;border-color:var(--beacon)}
+    .issued-token{margin-top:1rem;background:var(--ink);border:1px dashed rgba(232,176,125,.4);border-radius:12px;padding:.9rem;display:none}
+    .issued-token.show{display:block}
+    .issued-token code{font-family:var(--font-mono);font-size:.78rem;color:var(--beacon);word-break:break-all}
+    .note{font-family:var(--font-mono);font-size:.62rem;color:var(--bone-4)}
+
+    .timeline{position:relative;padding-left:1.2rem}
+    .timeline::before{content:'';position:absolute;left:4px;top:4px;bottom:4px;width:1px;background:var(--ink-line-2)}
+    .tl-item{position:relative;padding:0 0 1.1rem .4rem}
+    .tl-item::before{content:'';position:absolute;left:-1.05rem;top:5px;width:9px;height:9px;border-radius:50%;background:var(--beacon);box-shadow:0 0 10px var(--beacon-glow)}
+    .tl-item.rev::before{background:var(--bone-4);box-shadow:none}
+    .tl-t{font-size:.85rem;color:var(--bone)} .tl-m{font-family:var(--font-mono);font-size:.64rem;color:var(--bone-4);margin-top:.15rem}
+
+    .bars{display:flex;align-items:flex-end;gap:6px;height:120px}
+    .bars .bar{flex:1;background:linear-gradient(180deg,var(--beacon),rgba(232,176,125,.15));border-radius:4px 4px 0 0;min-height:4px}
+    .bars .bar:hover{opacity:.75}
+    .axis{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.58rem;color:var(--bone-4);margin-top:.5rem}
+
+    .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    @media(max-width:760px){.gauges{grid-template-columns:1fr}}
+    .gauge{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+    .ring{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;position:relative}
+    .ring::after{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--ink-card)}
+    .ring .num{position:relative;z-index:1;font-family:var(--font-display);font-size:1.55rem;color:var(--bone)}
+    .ring .num small{font-size:.8rem;color:var(--bone-3)}
+    .gauge .glab{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-4);text-align:center}
+
+    .row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--ink-line);gap:1rem}
+    .row:last-child{border-bottom:none}
+    .meter{height:6px;border-radius:4px;background:var(--ink-3);overflow:hidden;flex:1}
+    .meter span{display:block;height:100%;background:linear-gradient(90deg,var(--beacon-2),var(--beacon))}
+    .meter span.warn{background:linear-gradient(90deg,#caa15f,var(--ember))}
+
+    /* feed (alerts / audit) */
+    .feed{display:flex;flex-direction:column}
+    .feed .f{display:flex;gap:.7rem;padding:.7rem 0;border-bottom:1px solid var(--ink-line)}
+    .feed .f:last-child{border-bottom:none}
+    .feed .fi{font-size:1rem;line-height:1.2;flex-shrink:0}
+    .feed .ft{font-size:.84rem;color:var(--bone)} .feed .ft b{color:var(--bone)}
+    .feed .fm{font-family:var(--font-mono);font-size:.63rem;color:var(--bone-4);margin-top:.1rem}
+
+    /* scope editor */
+    .scopes{display:flex;flex-direction:column;gap:.55rem;margin-top:.3rem}
+    .scoperow{display:flex;align-items:center;justify-content:space-between;background:var(--ink);border:1px solid var(--ink-line);border-radius:10px;padding:.6rem .85rem}
+    .scoperow .sl{font-family:var(--font-mono);font-size:.78rem;color:var(--bone-2)}
+    .scoperow .sd{font-size:.7rem;color:var(--bone-4);margin-top:.1rem}
+    .toggle{width:38px;height:22px;border-radius:100px;background:var(--ink-3);border:1px solid var(--ink-line-2);position:relative;cursor:pointer;flex-shrink:0;transition:all .25s var(--ease)}
+    .toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--bone-4);transition:all .25s var(--ease)}
+    .toggle.on{background:rgba(232,176,125,.25);border-color:var(--beacon)}
+    .toggle.on::after{left:18px;background:var(--beacon)}
+
+    .kv{display:flex;gap:2rem;flex-wrap:wrap}
+    .kv .k{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone-4)}
+    .kv .v{font-family:var(--font-display);font-size:1.5rem;color:var(--bone);margin-top:.2rem}
+
+    .webhooks .wh{display:flex;align-items:center;justify-content:space-between;background:var(--ink);border:1px solid var(--ink-line);border-radius:10px;padding:.65rem .85rem;margin-bottom:.5rem}
+    .chip{font-family:var(--font-mono);font-size:.68rem;color:var(--bone-2)}
+
+    .section-title{font-family:var(--font-display);font-weight:400;font-size:1.6rem;color:var(--bone);letter-spacing:-.02em;margin:2.25rem 0 .35rem}
+    .section-title em{font-style:italic;font-weight:300;color:var(--beacon)}
+    .section-sub{font-size:.88rem;color:var(--bone-3);margin-bottom:1.4rem}
+    footer{border-top:1px solid var(--ink-line);margin-top:3rem;padding:1.5rem 0;text-align:center;color:var(--bone-4);font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em}
+
+    body[data-role="admin"] .member-only{display:none}
+    body[data-role="member"] .admin-only{display:none}
+    .demo-banner{background:rgba(232,176,125,.06);border:1px solid rgba(232,176,125,.2);border-radius:12px;padding:.7rem 1rem;font-family:var(--font-mono);font-size:.68rem;color:var(--beacon-2);margin:1rem 0 1.5rem;display:flex;align-items:center;gap:.6rem}
+    /* chart tooltip */
+    .bars .bar{cursor:default}
+    .tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink-2);border:1px solid var(--ink-line-2);border-radius:8px;padding:.5rem .7rem;font-family:var(--font-mono);font-size:.66rem;color:var(--bone);box-shadow:0 10px 28px rgba(0,0,0,.55);opacity:0;transform:translateY(4px);transition:opacity .12s var(--ease);white-space:nowrap}
+    .tip.show{opacity:1;transform:translateY(0)}
+    .tip b{color:var(--beacon)}
+    .tl-item.hidden{display:none}
+    .loadmore{margin-top:.4rem;background:none;border:none;color:var(--bone-3);font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;cursor:pointer;padding:.4rem 0}
+    .loadmore:hover{color:var(--beacon)}
+  </style>
+</head>
+<body data-role="admin">
+
+  <div class="topbar"><div class="wrap topbar-in">
+    <a class="brand" href="index-en.html"><span class="mark">K</span><b>Keryx</b><span class="sub">Console</span></a>
+    <div class="spacer"></div>
+    <div class="siteswitch" title="Multi-site (mockup)">app.northwind.io <span class="car">▾</span></div>
+    <div class="roleswitch" id="roleswitch" title="Demo: switch role">
+      <button data-role="admin" class="on">Admin</button>
+      <button data-role="member">Member</button>
+    </div>
+    <div class="userchip"><div class="avatar" id="avatar">A</div><div><div class="nm" id="who">Alex Morgan</div><div class="rl" id="whorole">administrator</div></div></div>
+  </div></div>
+
+  <div class="wrap">
+
+    <div class="phead">
+      <div>
+        <h1 class="admin-only">Token <em>console</em></h1>
+        <h1 class="member-only">My <em>access</em></h1>
+        <p class="admin-only">Issue, scope and revoke access tokens — the secure tunnel between your platform and Siri / AI assistants.</p>
+        <p class="member-only">Your personal token lets Siri &amp; AI assistants read only what you'd see when signed in — nothing more.</p>
+      </div>
+      <span class="pill"><span class="dot"></span> gateway online · api.northwind.io</span>
+    </div>
+
+    <div class="demo-banner">▲ Static mockup — illustrative data. Use the Admin / Member switch (top-right) to compare roles.</div>
+
+    <!-- ===================== ADMIN ===================== -->
+    <div class="kpis admin-only">
+      <div class="kpi"><div class="lab">Active tokens <span class="up">●</span></div><div class="val">23</div><div class="delta up">▲ 4 this week</div></div>
+      <div class="kpi"><div class="lab">Total issued</div><div class="val">31</div><div class="delta muted">8 revoked</div></div>
+      <div class="kpi"><div class="lab">Requests · 24h</div><div class="val">1,284</div><div class="delta up">▲ 12%</div></div>
+      <div class="kpi"><div class="lab">Avg latency</div><div class="val">38<small style="font-size:1rem;color:var(--bone-3)">ms</small></div><div class="delta up">p95 71ms</div></div>
+    </div>
+
+    <!-- tokens + issue -->
+    <div class="grid2 admin-only">
+      <div class="tablecard">
+        <div class="card-h" style="padding:1.25rem 1.5rem 0"><h3>Tokens</h3><span class="lab">scope · expiry · status</span></div>
+        <table class="tbl" style="margin-top:.75rem">
+          <thead><tr><th>Member</th><th>Role</th><th>Scope</th><th>Issued</th><th>Expires</th><th>Last used</th><th>Req.</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="u-name">Alex Morgan</div><div class="u-mail">alex@northwind.io</div></td><td><span class="badge b-admin">admin</span></td><td><span class="scope">*</span></td><td class="mono" style="font-size:.7rem">Jun 22</td><td class="mono" style="font-size:.7rem">never</td><td class="mono" style="font-size:.7rem">2m ago</td><td class="mono">612</td><td><span class="badge b-active">active</span></td><td><button class="btn sm danger">Revoke</button></td></tr>
+            <tr><td><div class="u-name">Jordan Lee</div><div class="u-mail">jordan@northwind.io</div></td><td><span class="badge b-member">member</span></td><td><span class="scope">read:own</span></td><td class="mono" style="font-size:.7rem">Jun 20</td><td class="mono" style="font-size:.7rem">in 88d</td><td class="mono" style="font-size:.7rem">1h ago</td><td class="mono">48</td><td><span class="badge b-active">active</span></td><td><button class="btn sm danger">Revoke</button></td></tr>
+            <tr><td><div class="u-name">Maya Chen</div><div class="u-mail">maya@northwind.io</div></td><td><span class="badge b-member">member</span></td><td><span class="scope">read:own</span></td><td class="mono" style="font-size:.7rem">Jun 19</td><td class="mono" style="font-size:.7rem">in 87d</td><td class="mono" style="font-size:.7rem">5h ago</td><td class="mono">31</td><td><span class="badge b-active">active</span></td><td><button class="btn sm danger">Revoke</button></td></tr>
+            <tr><td><div class="u-name">Daniel Brooks</div><div class="u-mail">daniel@northwind.io</div></td><td><span class="badge b-member">member</span></td><td><span class="scope">read:own</span></td><td class="mono" style="font-size:.7rem">Jun 18</td><td class="mono" style="font-size:.7rem">in 86d</td><td class="mono" style="font-size:.7rem">2d ago</td><td class="mono">12</td><td><span class="badge b-active">active</span></td><td><button class="btn sm danger">Revoke</button></td></tr>
+            <tr><td><div class="u-name">Reporting bot</div><div class="u-mail">svc · ci pipeline</div></td><td><span class="badge b-service">service</span></td><td><span class="scope">read:public</span></td><td class="mono" style="font-size:.7rem">Jun 10</td><td class="mono" style="font-size:.7rem">90d rotate</td><td class="mono" style="font-size:.7rem">12m ago</td><td class="mono">540</td><td><span class="badge b-active">active</span></td><td><button class="btn sm danger">Revoke</button></td></tr>
+            <tr style="opacity:.55"><td><div class="u-name">Sofia Romano</div><div class="u-mail">sofia@northwind.io</div></td><td><span class="badge b-member">member</span></td><td><span class="scope">read:own</span></td><td class="mono" style="font-size:.7rem">May 30</td><td class="mono" style="font-size:.7rem">—</td><td class="mono" style="font-size:.7rem">—</td><td class="mono">5</td><td><span class="badge b-revoked">revoked</span></td><td><button class="btn sm">Reissue</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Issue token</h3><span class="lab">admin only</span></div>
+        <div class="field"><label>Member</label><select><option>Priya Nair — priya@northwind.io</option><option>Liam Walsh — liam@northwind.io</option><option>New service token…</option></select></div>
+        <div class="field"><label>Role</label><select><option>member (sees only their own data)</option><option>admin (sees everything)</option><option>service (read:public)</option></select></div>
+        <div class="field"><label>Expires (auto-rotation)</label><select><option>90 days (recommended)</option><option>1 year</option><option>Never</option></select></div>
+        <button class="btn primary" style="width:100%" id="genbtn">Generate token + shortcut</button>
+        <div class="issued-token" id="issued"><div class="note" style="margin-bottom:.4rem">Shown once — embedded in the Siri shortcut automatically.</div><code>kx_live_a7f3c1e9d24b6058ac067e479cb4</code></div>
+      </div>
+    </div>
+
+    <!-- rate limits + new-device alerts -->
+    <div class="grid11 admin-only">
+      <div class="card">
+        <div class="card-h"><h3>🚦 Rate limits &amp; quotas</h3><span class="lab">req/min · per token</span></div>
+        <div class="row"><span class="scope" style="min-width:110px">Alex Morgan</span><div class="meter"><span style="width:22%"></span></div><span class="mono note">13 / 60</span></div>
+        <div class="row"><span class="scope" style="min-width:110px">Reporting bot</span><div class="meter"><span class="warn" style="width:91%"></span></div><span class="mono note">109 / 120</span></div>
+        <div class="row"><span class="scope" style="min-width:110px">Jordan Lee</span><div class="meter"><span style="width:8%"></span></div><span class="mono note">2 / 30</span></div>
+        <div class="row"><span class="scope" style="min-width:110px">Maya Chen</span><div class="meter"><span style="width:14%"></span></div><span class="mono note">4 / 30</span></div>
+        <div style="margin-top:.9rem;display:flex;gap:.6rem"><button class="btn sm">Set default limit</button><button class="btn sm">Auto-throttle: on</button></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>📍 New-device alerts</h3><span class="lab">security</span></div>
+        <div class="feed">
+          <div class="f"><span class="fi">🆕</span><div><div class="ft"><b>Maya Chen</b> signed in from a new device</div><div class="fm">Safari · iPhone · Berlin, DE · 2h ago</div></div></div>
+          <div class="f"><span class="fi">🆕</span><div><div class="ft"><b>Daniel Brooks</b> new IP</div><div class="fm">84.21.x.x · Dublin, IE · 1d ago</div></div></div>
+          <div class="f"><span class="fi">⚠️</span><div><div class="ft">Unusual volume — <b>Reporting bot</b></div><div class="fm">109 req/min · auto-throttled · 3h ago</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- granular scopes + audit log -->
+    <div class="grid11 admin-only">
+      <div class="card">
+        <div class="card-h"><h3>🎛️ Granular scopes</h3><span class="lab">Jordan Lee · read:own</span></div>
+        <p class="note" style="margin-bottom:.7rem">Pick exactly which queries this token may run.</p>
+        <div class="scopes">
+          <div class="scoperow"><div><div class="sl">summary</div><div class="sd">account overview</div></div><div class="toggle on"></div></div>
+          <div class="scoperow"><div><div class="sl">notifications</div><div class="sd">unread counts</div></div><div class="toggle on"></div></div>
+          <div class="scoperow"><div><div class="sl">activity</div><div class="sd">recent actions</div></div><div class="toggle on"></div></div>
+          <div class="scoperow"><div><div class="sl">billing</div><div class="sd">invoices &amp; balance</div></div><div class="toggle"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>🕵️ Audit log</h3><span class="lab">immutable · ip &amp; geo</span></div>
+        <div class="feed">
+          <div class="f"><span class="fi">＋</span><div><div class="ft"><b>Alex Morgan</b> issued token → Jordan Lee</div><div class="fm">86.34.x.x · Belgrade, RS · Jun 20 14:02</div></div></div>
+          <div class="f"><span class="fi">⟳</span><div><div class="ft"><b>Alex Morgan</b> rotated admin token</div><div class="fm">86.34.x.x · Belgrade, RS · Jun 17 09:10</div></div></div>
+          <div class="f"><span class="fi">✕</span><div><div class="ft"><b>Alex Morgan</b> revoked token → Sofia Romano</div><div class="fm">reason: left team · Jun 16 18:45</div></div></div>
+          <div class="f"><span class="fi">🎚️</span><div><div class="ft">Scope changed → Jordan Lee (billing off)</div><div class="fm">86.34.x.x · Jun 15 11:20</div></div></div>
+        </div>
+        <button class="btn sm" style="margin-top:.9rem">📤 Export CSV</button>
+      </div>
+    </div>
+
+    <!-- activity + issuance timeline -->
+    <div class="grid2 admin-only">
+      <div class="card"><div class="card-h"><h3>Requests &amp; activity</h3><span class="lab">last 14 days</span></div><div class="bars" id="adminbars"></div><div class="axis"><span>14d ago</span><span>7d</span><span>today</span></div></div>
+      <div class="card"><div class="card-h"><h3>When members got access</h3><span class="lab">timeline</span></div>
+        <div class="timeline" id="timeline">
+          <div class="tl-item"><div class="tl-t">Token issued — <b>Jordan Lee</b></div><div class="tl-m">Jun 20 · by Alex · via QR</div></div>
+          <div class="tl-item"><div class="tl-t">Token issued — <b>Maya Chen</b></div><div class="tl-m">Jun 19 · by Alex</div></div>
+          <div class="tl-item"><div class="tl-t">Admin token rotated</div><div class="tl-m">Jun 17 · by Alex</div></div>
+          <div class="tl-item rev"><div class="tl-t">Token revoked — <b>Sofia Romano</b></div><div class="tl-m">Jun 16 · left team</div></div>
+          <div class="tl-item hidden"><div class="tl-t">Scope changed — <b>Jordan Lee</b></div><div class="tl-m">Jun 15 · billing disabled</div></div>
+          <div class="tl-item hidden"><div class="tl-t">Token issued — <b>Daniel Brooks</b></div><div class="tl-m">Jun 14 · by Alex</div></div>
+          <div class="tl-item hidden"><div class="tl-t">Token issued — <b>Reporting bot</b></div><div class="tl-m">Jun 10 · service · read:public</div></div>
+          <div class="tl-item hidden rev"><div class="tl-t">Token expired — <b>Liam Walsh</b></div><div class="tl-m">Jun 08 · TTL reached</div></div>
+          <div class="tl-item hidden"><div class="tl-t">Token issued — <b>Priya Nair</b></div><div class="tl-m">Jun 03 · by Alex</div></div>
+        </div>
+        <button class="loadmore" id="loadmore">＋ Load more (5)</button>
+      </div>
+    </div>
+
+    <!-- ===================== MEMBER ===================== -->
+    <div class="grid2 member-only">
+      <div class="card">
+        <div class="card-h"><h3>Your token</h3><span class="badge b-active">active</span></div>
+        <div style="display:flex;align-items:center;gap:.6rem;margin:.4rem 0 1rem"><span class="tok">kx_live_••••••••••••••••••••6058</span><button class="btn sm">Reveal</button><button class="btn sm">Copy</button></div>
+        <table class="tbl" style="border:1px solid var(--ink-line);border-radius:12px;overflow:hidden">
+          <tbody>
+            <tr><td class="note">Scope</td><td><span class="scope">read:own (summary, notifications, activity)</span></td></tr>
+            <tr><td class="note">Issued</td><td class="mono" style="font-size:.78rem">Jun 20 · by Alex Morgan</td></tr>
+            <tr><td class="note">Expires</td><td class="mono" style="font-size:.78rem">in 88 days · auto-rotate</td></tr>
+            <tr><td class="note">Last used</td><td class="mono" style="font-size:.78rem">1 hour ago · iPhone</td></tr>
+            <tr><td class="note">Requests (30d)</td><td class="mono">48</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:.6rem;margin-top:1rem"><button class="btn">Regenerate</button><button class="btn danger">Revoke my access</button></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Install</h3><span class="lab">siri · ai</span></div>
+        <p style="font-size:.84rem;color:var(--bone-3);margin-bottom:.9rem">Add the Shortcut, then say <b style="color:var(--bone)">“Hey Siri, my account”</b>.</p>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <div style="width:96px;height:96px;border-radius:12px;background:repeating-conic-gradient(var(--bone) 0 25%,var(--ink-card) 0 50%) 50%/14px 14px;border:6px solid var(--bone);flex-shrink:0"></div>
+          <div><button class="btn primary" style="margin-bottom:.5rem">Add to iPhone</button><br><button class="btn sm">Copy ChatGPT/Claude connector</button></div>
+        </div>
+        <div class="card-h" style="margin:1.3rem 0 .7rem"><h3 style="font-size:.95rem">My recent sign-ins</h3><span class="lab">security</span></div>
+        <div class="feed">
+          <div class="f"><span class="fi">📱</span><div><div class="ft">iPhone · Safari</div><div class="fm">1h ago · your usual device</div></div></div>
+          <div class="f"><span class="fi">💻</span><div><div class="ft">macOS · ChatGPT connector</div><div class="fm">yesterday</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="member-only" style="margin-bottom:1rem"><div class="card"><div class="card-h"><h3 style="font-size:.95rem">My usage</h3><span class="lab">14 days</span></div><div class="bars" id="memberbars"></div></div></div>
+
+    <!-- ===================== GENERAL STATS (admin) ===================== -->
+    <div class="admin-only">
+      <h2 class="section-title">General <em>statistics</em></h2>
+      <p class="section-sub">Aggregate health across all tokens, the gateway host, and the upstream data source.</p>
+
+      <div class="grid11">
+        <div class="card">
+          <div class="card-h"><h3>🖥️ Host utilization</h3><span class="lab">gateway · uptime 21d</span></div>
+          <div class="gauges">
+            <div class="gauge"><div class="ring" style="background:conic-gradient(var(--beacon) 0 34%,var(--ink-3) 34% 100%)"><div class="num">34<small>%</small></div></div><div class="glab">CPU</div></div>
+            <div class="gauge"><div class="ring" style="background:conic-gradient(var(--azure) 0 58%,var(--ink-3) 58% 100%)"><div class="num">58<small>%</small></div></div><div class="glab">Memory<br>290MB</div></div>
+            <div class="gauge"><div class="ring" style="background:conic-gradient(var(--signal) 0 12%,var(--ink-3) 12% 100%)"><div class="num">12<small>%</small></div></div><div class="glab">Disk</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>🩺 Upstream health</h3><span class="lab">SITE_STATS_URL</span></div>
+          <div class="row"><span class="chip">api.northwind.io/stats</span><span class="badge b-active">200 OK</span></div>
+          <div class="row"><span class="note">p95 latency</span><span class="mono" style="color:var(--bone-2)">64 ms</span></div>
+          <div class="row"><span class="note">error rate (24h)</span><span class="mono" style="color:var(--signal)">0.3%</span></div>
+          <div class="row"><span class="note">last failure</span><span class="mono note">2d ago · 502 ×3</span></div>
+          <div class="row"><span class="note">checked</span><span class="mono note">every 30s</span></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card"><div class="card-h"><h3>Tokens over time</h3><span class="lab">issued vs revoked</span></div><div class="bars" id="tokbars"></div><div class="axis"><span>Jan</span><span>Apr</span><span>Jun</span></div></div>
+        <div class="card">
+          <div class="card-h"><h3>Requests by query</h3><span class="lab">share</span></div>
+          <div class="row"><span class="scope" style="min-width:104px">summary</span><div class="meter"><span style="width:54%"></span></div><span class="mono note">54%</span></div>
+          <div class="row"><span class="scope" style="min-width:104px">notifications</span><div class="meter"><span style="width:21%"></span></div><span class="mono note">21%</span></div>
+          <div class="row"><span class="scope" style="min-width:104px">billing</span><div class="meter"><span style="width:15%"></span></div><span class="mono note">15%</span></div>
+          <div class="row"><span class="scope" style="min-width:104px">activity</span><div class="meter"><span style="width:10%"></span></div><span class="mono note">10%</span></div>
+          <div class="kv" style="margin-top:1.1rem"><div><div class="k">Success 7d</div><div class="v" style="color:var(--signal)">99.7%</div></div><div><div class="k">Errors 7d</div><div class="v">9</div></div><div><div class="k">Tokens</div><div class="v">23</div></div></div>
+        </div>
+      </div>
+
+      <!-- export + webhooks + multi-site -->
+      <div class="grid11">
+        <div class="card webhooks">
+          <div class="card-h"><h3>📤 Export &amp; webhooks</h3><span class="lab">alerts &amp; data</span></div>
+          <div class="wh"><span class="chip">Slack · #keryx-alerts</span><span class="badge b-active">on anomaly</span></div>
+          <div class="wh"><span class="chip">Webhook · ops.northwind.io/hook</span><span class="badge b-active">enabled</span></div>
+          <div style="display:flex;gap:.6rem;margin-top:.6rem"><button class="btn sm">Export usage (24h)</button><button class="btn sm">Export usage (30d)</button><button class="btn sm">Add webhook</button></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>🌐 Connected sites</h3><span class="lab">multi-site</span></div>
+          <div class="row"><span class="chip">app.northwind.io</span><span class="badge b-active">active · 23 tokens</span></div>
+          <div class="row"><span class="chip">blog.northwind.io</span><span class="badge b-member">6 tokens</span></div>
+          <div class="row"><span class="chip">shop.northwind.io</span><span class="badge b-member">11 tokens</span></div>
+          <button class="btn sm" style="margin-top:.7rem">+ Connect a site</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="member-only"><div class="card" style="margin-top:1rem;text-align:center"><p style="font-size:.84rem;color:var(--bone-3)">🔒 Platform-wide statistics and other members' tokens are visible to administrators only. You can see and manage <b style="color:var(--bone)">your own access</b>.</p></div></div>
+
+    <footer>KERYX CONSOLE · MOCKUP · κῆρυξ — THE HERALD THAT CARRIES THE MESSAGE</footer>
+  </div>
+
+  <div id="tip" class="tip"></div>
+
+  <script>
+    const body=document.body,rs=document.getElementById('roleswitch');
+    const who=document.getElementById('who'),whorole=document.getElementById('whorole'),av=document.getElementById('avatar');
+    rs.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      [...rs.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');
+      const r=b.dataset.role;body.dataset.role=r;
+      if(r==='admin'){who.textContent='Alex Morgan';whorole.textContent='administrator';av.textContent='A';}
+      else{who.textContent='Jordan Lee';whorole.textContent='member';av.textContent='J';}
+      window.scrollTo({top:0,behavior:'smooth'});});
+    document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+    const gb=document.getElementById('genbtn'),iss=document.getElementById('issued');
+    if(gb)gb.addEventListener('click',()=>{iss.classList.add('show');gb.textContent='Token generated ✓';setTimeout(()=>gb.textContent='Generate token + shortcut',2200);});
+    // chart tooltips
+    const tip=document.getElementById('tip');
+    function bindTips(el){el.querySelectorAll('.bar').forEach(b=>{
+      b.addEventListener('mousemove',e=>{tip.innerHTML=b.dataset.tip;tip.classList.add('show');
+        tip.style.left=Math.min(e.clientX+14,window.innerWidth-200)+'px';tip.style.top=(e.clientY-46)+'px';});
+      b.addEventListener('mouseleave',()=>tip.classList.remove('show'));});}
+    const fmt=i=>new Date(Date.now()-i*864e5).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    function fill(id,seed,tipFn){const el=document.getElementById(id);if(!el)return;let s=seed;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280;};
+      for(let i=13;i>=0;i--){const r=rnd();const b=document.createElement('div');b.className='bar';b.style.height=(18+r*82)+'%';b.dataset.tip=tipFn(i,r);el.appendChild(b);}
+      bindTips(el);}
+    fill('adminbars',7,(i,r)=>`<b>${fmt(i)}</b> · ${Math.round(40+r*180)} requests · ${Math.round(28+r*30)}ms avg`);
+    fill('memberbars',23,(i,r)=>`<b>${fmt(i)}</b> · ${Math.round(1+r*9)} requests`);
+    fill('tokbars',42,(i,r)=>{const iss=Math.round(r*5),rev=Math.round(r*r*2);return `<b>${fmt(i*7)}</b> · ${iss} issued · ${rev} revoked`;});
+    // load more (timeline)
+    const lm=document.getElementById('loadmore');
+    if(lm)lm.addEventListener('click',()=>{document.querySelectorAll('#timeline .tl-item.hidden').forEach(x=>x.classList.remove('hidden'));lm.remove();});
+  </script>
+</body>
+</html>

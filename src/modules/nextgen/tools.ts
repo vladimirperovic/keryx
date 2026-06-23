@@ -21,7 +21,7 @@ const gatewayStatusTool: ToolDefinition<z.ZodObject<Record<string, never>>> = {
   input: z.object({}),
   responseExample: {
     name: "keryx",
-    version: "0.1.0",
+    version: "0.1.1",
     tools: ["gateway_status", "echo"],
   },
   // Hendler se postavlja u `registerNextGenModule` (treba mu pristup registru).
@@ -123,7 +123,7 @@ export function registerNextGenModule(registry: ToolRegistry): void {
     ...gatewayStatusTool,
     handler: () => ({
       name: "keryx",
-      version: "0.1.0",
+      version: "0.1.1",
       tools: registry.list().map((t) => t.name),
     }),
   });

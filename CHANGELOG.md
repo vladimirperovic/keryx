@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1] - 2026-06-23
 
 ### Added
 - Per-tool authentication model: `gateway` tools require the gateway token, while
@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SITE_STATS_URL`); registered only when that variable is set.
 - Human-friendly `404`: browsers are redirected to the landing page; API clients
   receive a JSON error that points to the useful routes.
+- Brand assets (logo wordmark, mark, banner, favicon) and a brand-styled landing.
+- **Token console mockup** (`/dashboard.html`): admin vs member views, token
+  issue/revoke, granular scopes, rate limits, audit log, new-device alerts,
+  host & upstream health, multi-site, export/webhooks — with chart tooltips and a
+  showcase section on the landing page.
 - Project infrastructure: GitHub Actions CI (typecheck + build + test on Node 20 & 22),
   a `node:test` suite (`npm test`), `SECURITY.md`, `CONTRIBUTING.md`,
   `CODE_OF_CONDUCT.md`, issue/PR templates, and `.editorconfig`.

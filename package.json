@@ -1,6 +1,6 @@
 {
   "name": "keryx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keryx AI Gateway — self-hosted bridge between web platforms and AI assistants (MCP + OpenAPI).",
   "license": "MIT",
   "type": "module",
