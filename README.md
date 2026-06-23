@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <i>From Ancient Greek</i> <b>κῆρυξ</b> <i>(kêryx):</i> “a herald — the messenger who carries the message.”
+</p>
+
+<p align="center">
   <b>Keryx AI Gateway</b> — a self-hosted bridge between your web platform and AI assistants.<br>
   MCP + OpenAPI + Apple Siri Shortcuts, from a single tool registry.
 </p>
@@ -15,7 +19,7 @@
 </p>
 
 <p align="center">
-  🔗 <a href="https://keryx.renovationsteps.com">Live demo</a> · 📖 <a href="CHANGELOG.md">Changelog</a>
+  🔗 <a href="https://keryx.renovationsteps.com/index-en.html">Live demo</a> · 📖 <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ---
