@@ -37,11 +37,13 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   docker:
-    name: Docker build
+    name: Docker and Compose
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Validate Compose configuration
+        run: docker compose config
       - name: Build image
         run: docker build --tag keryx:ci .
