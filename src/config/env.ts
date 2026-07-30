@@ -1,6 +1,44 @@
 import "dotenv/config";
 import { z } from "zod";
 
+function isOrigin(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      url.username === "" &&
+      url.password === "" &&
+      url.pathname === "/" &&
+      url.search === "" &&
+      url.hash === ""
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isOriginList(value: string, allowWildcard: boolean): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "") return true;
+  if (allowWildcard && trimmed === "*") return true;
+  return trimmed
+    .split(",")
+    .map((origin) => origin.trim())
+    .every((origin) => origin.length > 0 && isOrigin(origin));
+}
+
+const CorsOriginListSchema = z
+  .string()
+  .refine((value) => isOriginList(value, true), {
+    message: "Navedite `*` ili HTTP(S) origine bez putanje, razdvojene zarezom.",
+  });
+
+const McpOriginListSchema = z
+  .string()
+  .refine((value) => isOriginList(value, false), {
+    message: "Navedite HTTP(S) origine bez putanje, razdvojene zarezom.",
+  });
+
 /**
  * Centralizovana i validirana konfiguracija okruženja.
  *
@@ -22,10 +60,10 @@ const RawEnvSchema = z.object({
   KERYX_API_TOKEN: z.string().max(4096).optional().default(""),
 
   // Browser CORS. Prazno = CORS isključen; `*` je dozvoljen samo van produkcije.
-  KERYX_CORS_ORIGIN: z.string().default(""),
+  KERYX_CORS_ORIGIN: CorsOriginListSchema.default(""),
 
   // MCP Origin allow-list. Prazno = dozvoli samo origin iz PUBLIC_BASE_URL.
-  KERYX_MCP_ALLOWED_ORIGINS: z.string().default(""),
+  KERYX_MCP_ALLOWED_ORIGINS: McpOriginListSchema.default(""),
 
   // Broj pouzdanih reverse-proxy hopova. 0 = direktna konekcija.
   KERYX_TRUST_PROXY: z.coerce.number().int().min(0).max(3).default(0),
