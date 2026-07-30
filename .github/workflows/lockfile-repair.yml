@@ -1,9 +1,7 @@
 name: Lockfile Repair Preview
 
 on:
-  push:
-    branches:
-      - agent/keryx-security-hardening
+  pull_request:
 
 permissions:
   contents: read
