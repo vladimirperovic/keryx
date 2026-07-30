@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible problem in Keryx
+title: "[Bug]: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report vulnerabilities here. Follow SECURITY.md for private reporting.
+  - type: input
+    id: version
+    attributes:
+      label: Keryx version or commit
+      placeholder: v0.1.1 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Docker Compose
+        - Docker
+        - Local Node.js
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Remove tokens, private URLs, and personal data from logs and examples.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed secrets and personal data.
+          required: true
+        - label: I searched existing issues.
+          required: true
