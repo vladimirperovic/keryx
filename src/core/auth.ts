@@ -8,12 +8,12 @@ const MAX_AUTH_HEADER_LENGTH = 8192;
 /**
  * Izvlači bearer token iz Authorization header-a.
  *
- * Odbacuje kontrolne znakove, whitespace unutar tokena i predugačke headere pre
- * nego što vrednost dođe do autentikacione logike ili upstream servisa.
+ * Dozvoljava horizontalni whitespace oko vrednosti radi kompatibilnosti sa HTTP
+ * klijentima, ali odbacuje whitespace i kontrolne znakove unutar samog tokena.
  */
 export function bearerFromHeader(header: string | undefined): string {
   if (!header || header.length > MAX_AUTH_HEADER_LENGTH) return "";
-  const match = /^Bearer[ \t]+([^\s\u0000-\u001F\u007F]+)$/i.exec(header);
+  const match = /^Bearer[ \t]+([^\s\u0000-\u001F\u007F]+)[ \t]*$/i.exec(header);
   return match ? match[1] : "";
 }
 
