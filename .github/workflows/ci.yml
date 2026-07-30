@@ -13,18 +13,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-test:
-    name: Node ${{ matrix.node }}
+  build:
+    # Keep the historical check names required by the existing main-branch rule,
+    # while mapping them to maintained Node.js runtimes.
+    name: build (${{ matrix.required_context }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24]
+        include:
+          - required_context: 20
+            node: 22
+          - required_context: 22
+            node: 24
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Setup Node
+      - name: Setup Node ${{ matrix.node }}
         uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
