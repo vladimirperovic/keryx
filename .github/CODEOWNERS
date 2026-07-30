@@ -1,0 +1,14 @@
+# Default owner
+* @vladimirperovic
+
+# Security-sensitive areas
+/src/core/ @vladimirperovic
+/src/config/ @vladimirperovic
+/src/modules/nextgen/mcp.ts @vladimirperovic
+/src/modules/legacy/ @vladimirperovic
+/.github/workflows/ @vladimirperovic
+/Dockerfile @vladimirperovic
+/docker-compose.yml @vladimirperovic
+/SECURITY.md @vladimirperovic
+/SECURITY_ARCHITECTURE.md @vladimirperovic
+/THREAT_MODEL.md @vladimirperovic
