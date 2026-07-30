@@ -13,75 +13,42 @@
 
 <p align="center">
   <a href="https://github.com/vladimirperovic/keryx/actions/workflows/ci.yml"><img src="https://github.com/vladimirperovic/keryx/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=nodedotjs&logoColor=white" alt="Node.js">
-  <img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/Docker-hardened-2496ED?logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="License">
 </p>
 
 <p align="center">
-  🔗 <a href="https://keryx.renovationsteps.com/index-en.html">Live demo</a> · 📖 <a href="CHANGELOG.md">Changelog</a>
+  🔗 <a href="https://keryx.renovationsteps.com/index-en.html">Live demo</a> ·
+  📐 <a href="ARCHITECTURE.md">Architecture</a> ·
+  🔒 <a href="SECURITY_ARCHITECTURE.md">Security</a> ·
+  🗺️ <a href="ROADMAP.md">Roadmap</a> ·
+  📖 <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ---
 
 ## What is Keryx?
 
-**Keryx** is a lightweight gateway that exposes your tools and data to AI assistants. You define a tool once; Keryx serves it through every protocol at the same time:
+Keryx is a lightweight gateway that exposes your tools and data to AI assistants. Define a tool once and Keryx serves it through every supported protocol:
 
 | Module | What it does |
 |---|---|
-| **Next-Gen** (MCP / OpenAPI) | A Model Context Protocol endpoint and an auto-generated OpenAPI 3.1 schema — for ChatGPT, Claude, and other LLM clients. |
-| **Legacy** (Siri Shortcuts) | A REST API that generates downloadable Apple `.shortcut` files — a bridge to the iOS/macOS world. |
+| **Next-Gen** | Stateless MCP Streamable HTTP, generated OpenAPI 3.1, and REST routes for ChatGPT, Claude, and other clients. |
+| **Legacy** | Generates temporary Apple `.shortcut` files for Siri and the Shortcuts app. |
 
-Both modules share **one tool registry**, so any tool you register automatically appears in MCP, in the OpenAPI schema, and as a REST route — no duplication.
+Both modules use one typed `ToolRegistry`, so metadata, Zod validation, authentication mode, and handler behavior do not drift between protocols.
 
----
+## Security model at a glance
 
-## In plain words (no code required)
+- **Production fails closed.** A public HTTPS URL and a gateway token of at least 32 characters are required.
+- **MCP Origin validation.** Unknown, malformed, and opaque browser origins are rejected to reduce DNS-rebinding risk.
+- **Per-tool authentication.** `gateway` tools use the Keryx token; `forward` tools pass a caller token only to a fixed operator-configured upstream.
+- **Bounded network access.** Upstream calls have a timeout, disabled redirects, JSON content checks, and a response-size limit.
+- **Short-lived artifacts.** Shortcut URLs are 128-bit random, memory-only, TTL-limited, bounded, and single-use.
+- **Hardened container defaults.** Non-root user, dropped capabilities, read-only filesystem, `no-new-privileges`, PID limit, and loopback port binding.
 
-Think of Keryx as a **secure middleman** between your website and a voice or AI assistant (Siri, ChatGPT, Claude).
-
-- 🔒 **Your data stays on your site.** Keryx never copies or stores it — it only carries the question and the answer, over an encrypted, token-protected channel.
-- 👤 **Each person gets their own key.** A personal token works like the key to a single mailbox: the holder can *read* exactly what they'd see when logged in — and can't change anything.
-- 🎙️ **One key, every assistant.** The same token powers a tap-to-install **Siri Shortcut** and a **ChatGPT / Claude** connector.
-
-The result: someone can simply say *"Hey Siri, building status"* and hear the answer — without opening your site or logging in.
-
-### Try it in one minute
-
-**1. Run Keryx** (or use a hosted instance):
-
-```bash
-docker compose up --build      # → http://localhost:3000
-```
-
-**2. Point it at your site** — one line, the address of your site's read-only data endpoint:
-
-```env
-SITE_STATS_URL=https://your-site.com/api/stats
-```
-
-**3. Your people just ask.** From a phone with the installed Shortcut:
-
-> 🗣️ *"Hey Siri, building status"*
-> 🔊 *"6 news items, 1 new this week. 2 active polls. Your apartment: May is paid."*
-
-…or from ChatGPT / Claude with the connector added:
-
-> 💬 *"Anything new, and did I pay for May?"*
-
-Behind the scenes Keryx forwards each person's **personal token** to your site, **your site decides what they may see**, and the answer comes back — safe, scoped, and read-only. No passwords are ever shared with the assistant.
-
----
-
-## Features
-
-- 🔌 **One registry, every protocol** — register a tool once, reach MCP, OpenAPI, and REST.
-- 🗣️ **Siri Shortcuts generator** — turn an authenticated URL into an installable `.shortcut`.
-- 🔐 **Per-tool auth** — `gateway` tools require the gateway token; `forward` tools pass the caller's token to an upstream service for per-user scoping.
-- 📜 **Self-describing** — live OpenAPI schema at `/openapi.json` so LLMs can discover your tools.
-- 🐳 **Docker-ready** — single container with a built-in health check.
-- 🪶 **Tiny & typed** — TypeScript, Express, Zod; no database required.
+Read [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md) and [THREAT_MODEL.md](THREAT_MODEL.md) before exposing Keryx publicly.
 
 ---
 
@@ -92,60 +59,90 @@ Behind the scenes Keryx forwards each person's **personal token** to your site, 
 ```bash
 git clone https://github.com/vladimirperovic/keryx.git
 cd keryx
-cp .env.example .env      # then edit as needed
-npm install
-npm run dev               # http://localhost:3000
+cp .env.example .env
+npm ci
+npm run dev
 ```
 
-### Docker
+Open `http://localhost:3000`.
+
+### Docker Compose
 
 ```bash
+cp .env.example .env       # optional for a local no-auth evaluation; required for production
+# edit .env
 docker compose up --build
 ```
 
-That's it — the app boots in a container with a built-in health check.
+Compose binds to `127.0.0.1:3000` by default. Put a TLS reverse proxy in front for production. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
 ## Configuration
 
-All options are set via environment variables (see [`.env.example`](.env.example)):
+All options are environment variables. See [`.env.example`](.env.example) for comments and safe defaults.
 
 | Variable | Default | Description |
-|---|---|---|
-| `PORT` | `3000` | Port the server listens on |
-| `HOST` | `0.0.0.0` | Bind address |
-| `NODE_ENV` | `development` | `development` \| `production` \| `test` |
-| `PUBLIC_BASE_URL` | `http://localhost:3000` | Public URL of the server. Used in the OpenAPI schema and in generated download links — **set this in production** or links will point to localhost. |
-| `KERYX_API_TOKEN` | _(empty)_ | Gateway bearer token. Empty = authentication **disabled** (local dev only). |
-| `KERYX_CORS_ORIGIN` | `*` | Allowed CORS origin(s), comma-separated |
-| `KERYX_SHORTCUT_TTL_MS` | `600000` | How long (ms) a generated shortcut stays downloadable (10 min) |
-| `KERYX_SHORTCUT_STORE_MAX` | `1000` | Max shortcuts kept in memory (FIFO eviction) |
-| `SITE_STATS_URL` | _(empty)_ | Optional. URL of an external JSON stats endpoint. If unset, the `site_stats` tool is **not registered**. |
+|---|---:|---|
+| `PORT` | `3000` | Internal server port. |
+| `HOST` | `0.0.0.0` | Bind address inside the container/process. |
+| `NODE_ENV` | `development` | `development`, `production`, or `test`. |
+| `PUBLIC_BASE_URL` | `http://localhost:3000` | Public origin used in OpenAPI and generated links; HTTPS is required in production. |
+| `KERYX_API_TOKEN` | empty | Gateway bearer; production requires at least 32 characters. |
+| `KERYX_CORS_ORIGIN` | empty | Browser CORS origins, comma-separated. Empty disables cross-origin browser requests. `*` is rejected in production. |
+| `KERYX_MCP_ALLOWED_ORIGINS` | empty | Additional trusted MCP browser origins. `PUBLIC_BASE_URL` is always allowed. |
+| `KERYX_TRUST_PROXY` | `0` | Number of trusted reverse-proxy hops; normally `1` behind one proxy. |
+| `KERYX_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window. |
+| `KERYX_RATE_LIMIT_MAX` | `100` | Requests per IP/window for `/mcp` and `/api`. |
+| `KERYX_JSON_LIMIT` | `1mb` | Maximum JSON request body accepted by Express. |
+| `KERYX_SHORTCUT_TTL_MS` | `600000` | Shortcut download lifetime. |
+| `KERYX_SHORTCUT_STORE_MAX` | `1000` | Maximum in-memory Shortcut artifacts. |
+| `KERYX_UPSTREAM_MAX_BYTES` | `1000000` | Maximum accepted upstream JSON response. |
+| `SITE_STATS_URL` | empty | Fixed optional stats endpoint; HTTPS required in production. |
+| `KERYX_BIND_ADDRESS` | `127.0.0.1` | Docker host bind address. |
+
+### Production minimum
+
+```env
+NODE_ENV=production
+PUBLIC_BASE_URL=https://keryx.example.com
+KERYX_API_TOKEN=<strong-random-token-at-least-32-characters>
+KERYX_TRUST_PROXY=1
+KERYX_CORS_ORIGIN=https://trusted-browser-client.example.com
+KERYX_MCP_ALLOWED_ORIGINS=https://trusted-browser-client.example.com
+```
+
+Generate a token with a cryptographically secure tool, for example:
+
+```bash
+openssl rand -base64 48
+```
 
 ---
 
 ## Authentication model
 
-Auth is enforced **per tool**, not globally:
+Authentication is enforced per tool:
 
-- **`gateway` tools** (e.g. `create_shortcut`) require `Authorization: Bearer <KERYX_API_TOKEN>`. If `KERYX_API_TOKEN` is empty, auth is disabled (local dev).
-- **`forward` tools** (e.g. `site_stats`) do **not** check the gateway token. Instead, the caller's bearer token is **forwarded** to the upstream service, which decides scope. This lets the same token power both a Siri Shortcut and an LLM connector, and lets the upstream enforce per-user access.
+- **`gateway`** — requires `Authorization: Bearer <KERYX_API_TOKEN>` when auth is enabled. Production cannot run with auth disabled.
+- **`forward`** — requires any syntactically valid bearer and forwards it to the fixed upstream endpoint. The upstream must derive identity and scope from the token and must not trust caller-supplied IDs.
 
-> Tokens are compared in constant time. The shortcut download route (`/api/shortcuts/:id`) is public — the 128-bit random id is the capability.
+Tokens are never intentionally logged or persisted by Keryx. A token embedded in a generated `.shortcut` is visible to anyone who obtains that file, so use a narrow, revocable target token.
 
 ---
 
-## API endpoints
+## Endpoints
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| `GET` | `/` | public | Landing page |
-| `GET` | `/healthz` | public | Health check |
-| `GET` | `/openapi.json` | public | OpenAPI 3.1 schema |
-| `POST` | `/mcp` | per-tool | MCP endpoint (Streamable HTTP, stateless) |
-| `POST` | `/api/tools/<name>` | per-tool | Invoke a tool by name |
-| `GET` | `/api/shortcuts/:id` | public | Download a generated shortcut |
+| `GET` | `/` | public | Static landing page. |
+| `GET` | `/healthz` | public | Health check. |
+| `GET` | `/openapi.json` | public | Generated OpenAPI document. |
+| `POST` | `/mcp` | per tool | Stateless MCP Streamable HTTP endpoint. |
+| `POST` | `/api/tools/<name>` | per tool | Invoke one registered tool through REST. |
+| `GET` | `/api/shortcuts/:id` | capability URL | Single-use temporary Shortcut download. |
+
+Every response receives an `X-Request-Id`. API responses use `Cache-Control: no-store`.
 
 ---
 
@@ -153,77 +150,86 @@ Auth is enforced **per tool**, not globally:
 
 | Tool | Auth | Description |
 |---|---|---|
-| `gateway_status` | gateway | Service info + list of registered tools (discovery) |
-| `echo` | gateway | Returns the given message (connection test) |
-| `create_shortcut` | gateway | Builds an Apple `.shortcut` that calls a URL with a `Bearer` token; returns a temporary `downloadUrl` |
-| `site_stats` | forward | Proxies a request to `SITE_STATS_URL` (forwarding the caller token + arbitrary params) and returns its JSON. Registered only when `SITE_STATS_URL` is set. |
+| `gateway_status` | gateway | Service info and registered tool names. |
+| `echo` | gateway | Connection and validation test. |
+| `create_shortcut` | gateway | Builds a temporary single-use Apple Shortcut for an HTTPS target. |
+| `site_stats` | forward | Calls the fixed `SITE_STATS_URL` with the caller bearer and bounded JSON handling. Registered only when configured. |
 
 ### Examples
 
 ```bash
-# Health check
 curl http://localhost:3000/healthz
+```
 
-# Echo (gateway tool — needs the gateway token if auth is enabled)
+```bash
 curl -X POST http://localhost:3000/api/tools/echo \
   -H "Authorization: Bearer $KERYX_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Hello, Keryx!"}'
+  -d '{"message":"Hello, Keryx!"}'
+```
 
-# Generate a Siri shortcut that calls an authenticated endpoint
+```bash
 curl -X POST http://localhost:3000/api/tools/create_shortcut \
   -H "Authorization: Bearer $KERYX_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/api/stats", "token": "<target-api-token>", "method": "GET", "name": "My Shortcut"}'
+  -d '{"url":"https://example.com/api/stats","token":"<target-api-token>","method":"GET","name":"My Shortcut"}'
+```
 
-# site_stats (forward tool — the bearer is passed to SITE_STATS_URL)
+```bash
 curl -X POST http://localhost:3000/api/tools/site_stats \
-  -H "Authorization: Bearer <upstream-token>" \
+  -H "Authorization: Bearer <upstream-user-token>" \
   -H "Content-Type: application/json" \
-  -d '{"params": {"q": "summary"}}'
+  -d '{"params":{"q":"summary"}}'
 ```
 
 ---
 
 ## Architecture
 
-Keryx uses a **shared registry** pattern. Every tool is registered once (`src/core/registry.ts`) and the gateway exposes it through:
-
-- **MCP** — for AI agents that speak the Model Context Protocol (`/mcp`)
-- **OpenAPI** — for REST clients and AI platforms such as ChatGPT Actions (`/openapi.json`)
-- **Siri Shortcuts** — for Apple devices, via generated `.shortcut` files
-
-```
+```text
 src/
-├── core/        registry, OpenAPI builder, auth helpers
-├── config/      validated environment (Zod)
+├── config/      validated, fail-closed environment configuration
+├── core/        registry, auth helpers, OpenAPI generator
 ├── modules/
-│   ├── nextgen/ MCP server + tools (gateway_status, echo, site_stats)
-│   └── legacy/  Siri Shortcuts (create_shortcut, ScPL compiler, store)
-└── server.ts    Express wiring
+│   ├── nextgen/ MCP server and gateway/upstream tools
+│   └── legacy/  Siri Shortcut compiler and temporary store
+├── index.ts     process startup and graceful shutdown
+└── server.ts    HTTP, security, transport, and route wiring
 ```
 
-### Adding a tool
+The full design and trust boundaries are documented in:
 
-Define a `ToolDefinition` and register it — it shows up everywhere automatically. See `src/modules/nextgen/tools.ts` for the pattern.
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md)
+- [THREAT_MODEL.md](THREAT_MODEL.md)
+- [docs/ADDING_TOOLS.md](docs/ADDING_TOOLS.md)
 
 ---
 
 ## Development
 
+Keryx supports maintained Node.js LTS lines (22 and 24 in CI).
+
 ```bash
-npm run dev        # watch mode
-npm run typecheck  # tsc --noEmit
-npm run build      # compile to dist/
-npm test           # run the test suite
-npm start          # run the compiled server
+npm run dev
+npm run typecheck
+npm run build
+npm test
+npm run check
 ```
 
----
+CI also builds the Docker image and audits production dependencies. CodeQL, dependency review, and Dependabot are configured in `.github/`.
 
-## Contributing
+## Public project files
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). To report a security issue, see [SECURITY.md](SECURITY.md).
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+- [SUPPORT.md](SUPPORT.md)
+- [GOVERNANCE.md](GOVERNANCE.md)
+- [ROADMAP.md](ROADMAP.md)
+- [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
