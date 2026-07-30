@@ -1,42 +1,61 @@
 # Contributing to Keryx
 
-Thanks for your interest! Contributions of all sizes are welcome.
+Thanks for your interest. Contributions of all sizes are welcome when they keep the gateway focused, secure, and maintainable.
 
 ## Getting started
+
+Requirements:
+
+- Node.js 22 or 24;
+- npm from the selected Node distribution;
+- Docker with Compose for container changes.
 
 ```bash
 git clone https://github.com/vladimirperovic/keryx.git
 cd keryx
 cp .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
-## Before you open a pull request
+## Before opening a pull request
 
-Run the full local check — CI runs the same:
+Run the same primary checks as CI:
 
 ```bash
-npm run typecheck   # no type errors
-npm run build       # compiles cleanly
-npm test            # tests pass
+npm run check
+docker compose config
+docker build -t keryx:local .
 ```
 
 ## Guidelines
 
-- **One change per PR.** Keep diffs focused and easy to review.
-- **Match the surrounding style.** TypeScript, ESM, Zod for input validation. The codebase favours small, well-commented modules.
-- **Add a tool the registry way.** Define a `ToolDefinition` and register it in the relevant module (`src/modules/**`); it will appear in MCP, OpenAPI, and REST automatically. See `src/modules/nextgen/tools.ts`.
-- **Validate all input** with Zod. Never trust client-supplied scope on `forward` tools — the upstream enforces it.
-- **Don't commit secrets.** `.env` is gitignored; use `.env.example` for new variables (with safe placeholder values).
-- **Update docs.** If you add/rename a tool or env var, update `README.md` and `.env.example`.
+- **Keep each PR focused.** Separate unrelated fixes and features.
+- **Use the shared registry.** Define one `ToolDefinition`; MCP, OpenAPI, and REST are generated from it.
+- **Validate all caller input.** Bound strings, arrays, records, numeric ranges, query keys, and network responses.
+- **Choose authentication deliberately.** `gateway` means Keryx authorizes the call; `forward` means a fixed upstream service authorizes the caller token.
+- **Do not create a general URL fetcher.** Network destinations should be operator configured and HTTPS in production.
+- **Never trust caller-supplied scope.** The upstream must derive identity and permissions from the bearer token.
+- **Do not log or commit secrets.** This includes `.env`, private URLs, Authorization headers, downloaded Shortcuts, personal data, and production payloads.
+- **Add regression tests.** Cover malformed input, auth boundaries, resource limits, and protocol-specific behavior.
+- **Update public docs.** Configuration and trust-boundary changes require updates to README, `.env.example`, architecture/security documents, and the changelog.
+
+Read [docs/ADDING_TOOLS.md](docs/ADDING_TOOLS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [THREAT_MODEL.md](THREAT_MODEL.md) before adding a new integration.
+
+## Security-sensitive changes
+
+Discuss substantial authentication, persistent storage, arbitrary network access, destructive tools, plugin loading, or new production dependencies before investing in a large implementation. Mark the security impact in the pull request template and explain compatibility consequences.
+
+Do not disclose vulnerabilities in public review comments. Follow [SECURITY.md](SECURITY.md).
 
 ## Commit messages
 
-Use clear, conventional-style messages where possible, e.g. `feat(nextgen): add weather tool` or `fix(legacy): handle empty shortcut name`.
+Use concise, action-oriented messages. Conventional-style examples are welcome:
 
-## Reporting bugs / requesting features
+- `feat(nextgen): add read-only status tool`
+- `fix(mcp): reject untrusted origin`
+- `docs: explain reverse proxy deployment`
 
-Use the issue templates. For security issues, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+## License
 
-By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contribution is licensed under the [MIT License](LICENSE).
