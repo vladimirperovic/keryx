@@ -1,22 +1,33 @@
-## What & why
+## Summary
 
-Briefly describe the change and the motivation.
+Describe the change and the problem it solves.
 
 ## Type of change
 
 - [ ] Bug fix
-- [ ] New feature / tool
-- [ ] Docs
-- [ ] Refactor / chore
+- [ ] New feature or tool
+- [ ] Security hardening
+- [ ] Documentation
+- [ ] Refactor or maintenance
+
+## Security impact
+
+- [ ] No authentication, authorization, token-forwarding, network, or secret-handling changes
+- [ ] Security-sensitive behavior changed and is explained below
+
+## Validation
+
+- [ ] `npm run check`
+- [ ] Docker image builds
+- [ ] Tests cover new or changed behavior
+- [ ] `README.md` and `.env.example` are updated when configuration changed
 
 ## Checklist
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run build` passes
-- [ ] `npm test` passes
-- [ ] Updated `README.md` / `.env.example` if behaviour or config changed
-- [ ] No secrets committed
+- [ ] The diff is focused and compatibility implications are documented
+- [ ] No secrets, private endpoints, personal data, or production tokens are included
+- [ ] New tools validate all input and use the correct auth model
 
 ## Notes for reviewers
 
-Anything specific you'd like feedback on.
+Call out the highest-risk part of the change and any follow-up work.

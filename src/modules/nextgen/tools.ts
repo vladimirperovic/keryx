@@ -2,21 +2,11 @@ import { z } from "zod";
 import type { ToolDefinition, ToolRegistry } from "../../core/registry.js";
 import { config } from "../../config/env.js";
 
-/**
- * "Next-Gen" modul: srz gateway-a koja izlaze funkcije LLM agentima.
- *
- * Ovde definisemo POCETNE (seed) alate. Oni sluze dve svrhe:
- *  1) Daju OpenAPI shemi i MCP serveru stvarne, pozive operacije za MVP.
- *  2) Sluze kao OBRAZAC koji sledeci agenti kopiraju kada dodaju svoje alate
- *     (npr. Legacy modul registruje `create_shortcut` na isti nacin).
- */
-
 const gatewayStatusTool: ToolDefinition<z.ZodObject<Record<string, never>>> = {
   name: "gateway_status",
   title: "Status gateway-a",
   description:
-    "Vraca osnovne informacije o Keryx gateway-u i listu svih trenutno " +
-    "registrovanih alata. Koristi se za otkrivanje (discovery) dostupnih funkcija.",
+    "Vraća osnovne informacije o Keryx gateway-u i listu trenutno registrovanih alata.",
   module: "nextgen",
   input: z.object({}),
   responseExample: {
@@ -24,7 +14,6 @@ const gatewayStatusTool: ToolDefinition<z.ZodObject<Record<string, never>>> = {
     version: "0.1.1",
     tools: ["gateway_status", "echo"],
   },
-  // Hendler se postavlja u `registerNextGenModule` (treba mu pristup registru).
   handler: () => {
     throw new Error("not wired");
   },
@@ -33,16 +22,11 @@ const gatewayStatusTool: ToolDefinition<z.ZodObject<Record<string, never>>> = {
 const echoTool = {
   name: "echo",
   title: "Echo poruke",
-  description:
-    "Vraca prosledjenu poruku. Demonstrativni alat koji pokazuje validaciju " +
-    "ulaza i transformaciju — koristan za testiranje konekcije LLM <-> Keryx.",
+  description: "Vraća prosleđenu poruku; koristi se za testiranje konekcije.",
   module: "nextgen",
   input: z.object({
     message: z.string().min(1).max(2000).describe("Tekst koji treba vratiti."),
-    uppercase: z
-      .boolean()
-      .default(false)
-      .describe("Ako je true, poruka se vraca velikim slovima."),
+    uppercase: z.boolean().default(false).describe("Vrati poruku velikim slovima."),
   }),
   responseExample: { message: "ZDRAVO, KERYX", length: 13 },
   handler: (input) => ({
@@ -51,37 +35,36 @@ const echoTool = {
   }),
 } satisfies ToolDefinition;
 
-/**
- * `site_stats`: generički most ka eksternom sajtu koji izlaže statistiku kao JSON.
- *
- * Prolaz (proxy): prosleđuje opcione upitne parametre konfigurisanom endpointu
- * (`SITE_STATS_URL`) uz `format=json`, i vraća njegov JSON. Domenska značenja
- * (koja polja, koji parametri) žive u SAMOM endpointu — Keryx ostaje generički.
- *
- * "forward" auth: caller token se prosleđuje endpointu, koji sam određuje scope
- * (npr. admin vidi sve, ograničeni token vidi samo svoj deo). Isti token tako
- * radi i u Siri prečici i u ChatGPT/Claude konektoru.
- *
- * Registruje se SAMO ako je `SITE_STATS_URL` postavljen.
- */
-const siteStatsInput = z.object({
-  params: z
-    .record(z.string(), z.string())
-    .optional()
-    .describe(
-      "Opcioni query parametri koji se prosleđuju stats endpointu (npr. " +
-        '{"q":"...","id":"..."}). Nazivi i značenje zavise od konkretnog sajta.',
-    ),
-});
+const queryKey = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9_.-]+$/, "Parametar sadrži nedozvoljene znakove.");
+const queryValue = z.string().max(512);
+
+const siteStatsInput = z
+  .object({
+    params: z
+      .record(queryKey, queryValue)
+      .optional()
+      .describe("Opcioni query parametri koji se prosleđuju stats endpointu."),
+  })
+  .superRefine((input, ctx) => {
+    if (Object.keys(input.params ?? {}).length > 25) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["params"],
+        message: "Dozvoljeno je najviše 25 query parametara.",
+      });
+    }
+  });
 
 const siteStatsTool = {
   name: "site_stats",
   title: "Statistika sajta",
   description:
-    "Dohvata aktuelnu statistiku povezanog sajta preko konfigurisanog endpointa " +
-    "(SITE_STATS_URL) i vraća JSON. Prosleđuje opcione upitne parametre i caller " +
-    "token (pristup/scope određuje sam sajt). Oblik odgovora zavisi od sajta — " +
-    "koristi za pitanja o sadržaju i stanju tog sajta.",
+    "Dohvata JSON sa konfigurisanog SITE_STATS_URL endpointa i prosleđuje caller token. " +
+    "Upstream servis sam određuje korisnički scope i prava pristupa.",
   module: "nextgen",
   auth: "forward",
   input: siteStatsInput,
@@ -93,46 +76,79 @@ const siteStatsTool = {
     if (!ctx.callerToken) {
       throw new Error("Nedostaje token za pristup podacima sajta.");
     }
+
     const url = new URL(config.SITE_STATS_URL);
     for (const [key, value] of Object.entries(input.params ?? {})) {
       url.searchParams.set(key, String(value));
     }
-    // `format` se postavlja POSLE params-a da ga pozivalac ne može pregaziti.
+    // Pozivalac ne može pregaziti format.
     url.searchParams.set("format", "json");
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${ctx.callerToken}` },
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${ctx.callerToken}`,
+      },
+      redirect: "error",
       signal: AbortSignal.timeout(8000),
     });
-    if (res.status === 401) {
-      throw new Error("Token nije prihvaćen (proverite da li je važeći/aktivan).");
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Token nije prihvaćen ili nema dovoljan scope.");
     }
-    if (!res.ok) {
-      throw new Error(`Stats endpoint je vratio HTTP ${res.status}.`);
+    if (!response.ok) {
+      throw new Error(`Stats endpoint je vratio HTTP ${response.status}.`);
     }
-    return await res.json();
+
+    const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+    if (!contentType.includes("application/json") && !contentType.includes("+json")) {
+      throw new Error("Stats endpoint nije vratio JSON sadržaj.");
+    }
+
+    return await readBoundedJson(response, config.KERYX_UPSTREAM_MAX_BYTES);
   },
 } satisfies ToolDefinition;
 
-/**
- * Registruje sve Next-Gen alate u deljeni registar. Poziva se jednom na startu.
- */
+async function readBoundedJson(response: Response, maxBytes: number): Promise<unknown> {
+  const declaredLength = Number(response.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw new Error("Odgovor stats endpointa je prevelik.");
+  }
+
+  if (!response.body) throw new Error("Stats endpoint je vratio prazno telo.");
+
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let total = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("Odgovor stats endpointa je prevelik.");
+    }
+    chunks.push(Buffer.from(value));
+  }
+
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
+  } catch {
+    throw new Error("Stats endpoint je vratio neispravan JSON.");
+  }
+}
+
 export function registerNextGenModule(registry: ToolRegistry): void {
-  // `gateway_status` mu treba sam registar da bi izlistao alate — zato ga
-  // "ozivimo" ovde gde imamo referencu.
   registry.register({
     ...gatewayStatusTool,
     handler: () => ({
       name: "keryx",
       version: "0.1.1",
-      tools: registry.list().map((t) => t.name),
+      tools: registry.list().map((tool) => tool.name),
     }),
   });
 
   registry.register(echoTool);
-
-  // Opcioni alat: registruje se samo ako je endpoint konfigurisan, da javni klon
-  // ne prikazuje nepodešen alat.
-  if (config.SITE_STATS_URL) {
-    registry.register(siteStatsTool);
-  }
+  if (config.SITE_STATS_URL) registry.register(siteStatsTool);
 }

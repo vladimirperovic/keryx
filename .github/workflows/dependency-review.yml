@@ -1,0 +1,43 @@
+name: Dependency Review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # GitHub's dependency-review API requires Dependency Graph to be enabled.
+      # Keep this best-effort until the repository setting is enabled, then remove
+      # continue-on-error so newly introduced vulnerable dependencies block PRs.
+      - name: Review dependency changes
+        id: dependency-review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Enforce production vulnerability threshold
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Explain optional GitHub review status
+        if: steps.dependency-review.outcome == 'failure'
+        run: |
+          echo "GitHub Dependency Review is unavailable until Dependency Graph is enabled."
+          echo "The mandatory npm production audit passed and remains the blocking control."

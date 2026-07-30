@@ -1,19 +1,12 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { ToolRegistry } from "./registry.js";
 
-/** Putanja pod kojom se REST poziva jedan alat. */
+/** REST path for one registered tool. */
 export function toolHttpPath(name: string): string {
   return `/api/tools/${name}`;
 }
 
-/**
- * Gradi OpenAPI 3.1 dokument iz registra alata.
- *
- * Zasto rucno (a ne neka teska biblioteka): registar je mali i pod nasom
- * kontrolom, pa je deterministicki generator citljiviji, bez build magije, i
- * daje tacno onu semu kakvu Claude/ChatGPT "tool use" ocekuju — svaki alat je
- * jedan `POST` sa JSON telom validiranim Zod semom.
- */
+/** Builds a deterministic OpenAPI document from the shared tool registry. */
 export function buildOpenApiDocument(
   registry: ToolRegistry,
   opts: { baseUrl: string; version: string },
@@ -24,9 +17,8 @@ export function buildOpenApiDocument(
 
   for (const tool of registry.list()) {
     tags.add(tool.module);
-
     const requestSchemaName = `${pascal(tool.name)}Request`;
-    // `target: "openApi3"` proizvodi semu kompatibilnu sa OpenAPI (nullable, itd.)
+
     schemas[requestSchemaName] = zodToJsonSchema(tool.input, {
       target: "openApi3",
       $refStrategy: "none",
@@ -49,17 +41,24 @@ export function buildOpenApiDocument(
         },
         responses: {
           "200": {
-            description: "Uspesno izvrsenje alata.",
+            description: "Tool executed successfully.",
+            headers: {
+              "X-Request-Id": {
+                description: "Identifier for correlating the request with server logs.",
+                schema: { type: "string", format: "uuid" },
+              },
+            },
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    ok: { type: "boolean", enum: [true] },
-                    tool: { type: "string" },
+                    ok: { type: "boolean", const: true },
+                    tool: { type: "string", const: tool.name },
                     result: {},
                   },
                   required: ["ok", "tool", "result"],
+                  additionalProperties: false,
                 },
                 ...(tool.responseExample !== undefined
                   ? {
@@ -73,49 +72,38 @@ export function buildOpenApiDocument(
               },
             },
           },
-          "400": {
-            description: "Neispravan ulaz (greska validacije).",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-          "401": {
-            description: "Nedostaje ili je neispravan API token.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
+          "400": errorResponse("Input validation failed."),
+          "401": errorResponse("Bearer authentication is missing or invalid."),
+          "429": errorResponse("Rate limit exceeded."),
+          "500": errorResponse("The tool failed without exposing internal details."),
         },
       },
     };
   }
 
-  // Zajednicka sema greske.
   schemas.ErrorResponse = {
     type: "object",
     properties: {
-      ok: { type: "boolean", enum: [false] },
+      ok: { type: "boolean", const: false },
       error: { type: "string" },
       details: {},
+      requestId: { type: "string", format: "uuid" },
     },
     required: ["ok", "error"],
+    additionalProperties: false,
   };
 
   return {
-    openapi: "3.1.0",
+    openapi: "3.1.1",
     info: {
       title: "Keryx AI Gateway",
       version: opts.version,
       description:
-        "Self-hosted most koji izlaze funkcije web platforme LLM agentima " +
-        "(Claude, ChatGPT) preko OpenAPI sheme i Model Context Protocol-a.",
+        "Self-hosted gateway that exposes one validated tool registry through REST, " +
+        "OpenAPI and the Model Context Protocol.",
     },
     servers: [{ url: opts.baseUrl }],
-    tags: [...tags].map((t) => ({ name: t })),
+    tags: [...tags].map((name) => ({ name })),
     paths,
     components: {
       schemas,
@@ -124,8 +112,26 @@ export function buildOpenApiDocument(
           type: "http",
           scheme: "bearer",
           description:
-            "Opcioni Keryx API token (Authorization: Bearer <token>).",
+            "Gateway tools require KERYX_API_TOKEN. Forward tools require a caller bearer " +
+            "that the fixed upstream service authorizes.",
         },
+      },
+    },
+  };
+}
+
+function errorResponse(description: string): Record<string, unknown> {
+  return {
+    description,
+    headers: {
+      "X-Request-Id": {
+        description: "Identifier for correlating the request with server logs.",
+        schema: { type: "string", format: "uuid" },
+      },
+    },
+    content: {
+      "application/json": {
+        schema: { $ref: "#/components/schemas/ErrorResponse" },
       },
     },
   };
@@ -134,6 +140,6 @@ export function buildOpenApiDocument(
 function pascal(snake: string): string {
   return snake
     .split("_")
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
 }

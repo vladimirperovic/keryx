@@ -2,23 +2,22 @@ import { timingSafeEqual } from "node:crypto";
 import { config } from "../config/env.js";
 import type { ToolDefinition } from "./registry.js";
 
-/**
- * Pomoćne funkcije za autentikaciju gateway-a.
- *
- * Model (vidi `server.ts` / `mcp.ts`):
- *   - "gateway" alati (npr. create_shortcut) traže Keryx gateway token.
- *   - "forward" alati (building_stats) NE traže gateway token — token koji je
- *     pozivalac poslao se prosleđuje ciljnom servisu, koji sam odlučuje o scope-u.
- */
+/** Najveća prihvatljiva dužina Authorization header-a. */
+const MAX_AUTH_HEADER_LENGTH = 8192;
 
-/** Izvuci bearer token iz `Authorization` header-a (prazno ako ga nema). */
+/**
+ * Izvlači bearer token iz Authorization header-a.
+ *
+ * Dozvoljava horizontalni whitespace oko vrednosti radi kompatibilnosti sa HTTP
+ * klijentima, ali odbacuje whitespace i kontrolne znakove unutar samog tokena.
+ */
 export function bearerFromHeader(header: string | undefined): string {
-  if (!header) return "";
-  const m = /^Bearer\s+(.+)$/i.exec(header);
-  return m ? m[1].trim() : "";
+  if (!header || header.length > MAX_AUTH_HEADER_LENGTH) return "";
+  const match = /^Bearer[ \t]+([^\s\u0000-\u001F\u007F]+)[ \t]*$/i.exec(header);
+  return match ? match[1] : "";
 }
 
-/** Konstantno-vremensko poređenje tokena (otporno na timing napade). */
+/** Konstantno-vremensko poređenje tokena iste dužine. */
 export function safeTokenEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a);
   const bb = Buffer.from(b);
@@ -27,11 +26,11 @@ export function safeTokenEqual(a: string, b: string): boolean {
 }
 
 /**
- * Provera autentikacije za jedan poziv alata. Vraća poruku greške ili `null` ako
- * je pristup dozvoljen. Deli je REST sloj (server.ts) i MCP sloj (mcp.ts).
+ * Provera autentikacije po alatu.
  *
- *   - "forward" alat: traži DA postoji bilo kakav bearer (prosleđuje se dalje).
- *   - "gateway" alat: traži tačan KERYX_API_TOKEN (osim ako je auth isključen).
+ * - `forward` alat zahteva bearer koji se prosleđuje ciljnom servisu.
+ * - `gateway` alat zahteva KERYX_API_TOKEN; auth bez tokena postoji samo van
+ *   produkcije, jer konfiguracija u produkciji radi fail-closed.
  */
 export function checkToolAuth(tool: ToolDefinition, callerToken: string): string | null {
   if (tool.auth === "forward") {
