@@ -79,7 +79,7 @@ const siteStatsTool = {
 
     const url = new URL(config.SITE_STATS_URL);
     for (const [key, value] of Object.entries(input.params ?? {})) {
-      url.searchParams.set(key, value);
+      url.searchParams.set(key, String(value));
     }
     // Pozivalac ne može pregaziti format.
     url.searchParams.set("format", "json");
