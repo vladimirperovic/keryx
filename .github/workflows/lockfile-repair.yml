@@ -19,7 +19,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Refresh vulnerable transitive dependencies
-        run: npm audit fix --package-lock-only
+        run: npm audit fix --package-lock-only || true
       - name: Verify no high-severity production advisories
         run: npm audit --omit=dev --audit-level=high
       - name: Upload repaired lockfile
