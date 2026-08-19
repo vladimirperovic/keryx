@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 ENV NODE_ENV=development
@@ -11,7 +11,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 ENV NODE_ENV=production \
     NODE_OPTIONS=--enable-source-maps
