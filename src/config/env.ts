@@ -87,6 +87,14 @@ const RawEnvSchema = z.object({
 
   // Opciono; prazan string znači da se site_stats alat ne registruje.
   SITE_STATS_URL: z.union([z.literal(""), z.string().url()]).default(""),
+
+  // Fiksni RenovationSteps upstream. Podrazumevana vrednost odgovara javnoj
+  // produkciji ovog Keryx deployment-a; eksplicitni prazan string gasi alate.
+  // Caller prosleđuje uski project-scoped RenovationSteps API key (rsk_...).
+  RENOVATIONSTEPS_BASE_URL: z
+    .union([z.literal(""), z.string().url()])
+    .default("https://renovationsteps.com")
+    .transform((url) => url.replace(/\/+$/, "")),
 });
 
 const EnvSchema = RawEnvSchema.superRefine((env, ctx) => {
@@ -121,6 +129,17 @@ const EnvSchema = RawEnvSchema.superRefine((env, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["SITE_STATS_URL"],
       message: "U produkciji SITE_STATS_URL mora koristiti HTTPS.",
+    });
+  }
+
+  if (
+    env.RENOVATIONSTEPS_BASE_URL &&
+    new URL(env.RENOVATIONSTEPS_BASE_URL).protocol !== "https:"
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["RENOVATIONSTEPS_BASE_URL"],
+      message: "U produkciji RENOVATIONSTEPS_BASE_URL mora koristiti HTTPS.",
     });
   }
 });
